@@ -8,6 +8,7 @@ import banner1 from '@/assets/carrocel/c1.jpeg';
 import banner2 from '@/assets/carrocel/c2.jpeg';
 import banner3 from '@/assets/carrocel/c3.jpeg';
 import farmaco from '@/assets/farmaco.jpg';
+import ProductCard from '@/components/ui/ProductCard'
 import chiringa from '@/assets/carrocel/about.jpg';
 const categories = [
   { name: 'Pele e Estética', slug: 'pele-e-estetica' },
@@ -38,7 +39,7 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b z-10 relative">
+      <header className="bg-white border-b z-10 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center" style={{ minWidth: 120 }}>
@@ -61,7 +62,7 @@ function HomePage() {
 
               <div className="flex items-center gap-2">
                 {/* Dark Mode Toggle */}
-                <button 
+                <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-all duration-300 relative overflow-hidden"
                   title={isDarkMode ? "Mudar para modo claro" : "Mudar para modo escuro"}
@@ -216,58 +217,7 @@ function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="group rounded-xl bg-white flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                  {/* Imagem com overlay no hover */}
-                  <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
-                    <Image
-                      src={farmaco}
-                      alt={`Produto ${i + 1}`}
-                      fill
-                      className="object-cover transform group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute top-3 right-3 z-20">
-                      <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">-12%</span>
-                    </div>
-                  </div>
-
-                  {/* Conteúdo */}
-                  <div className="p-5 flex flex-col flex-1">
-                    {/* Título e Descrição */}
-                    <div className="mb-4">
-                      <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">Produto {i + 1}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">Descrição breve do produto em destaque com detalhes importantes.</p>
-                    </div>
-
-                    {/* Preços */}
-                    <div className="mt-auto">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs text-gray-500 line-through">{(7990 + i * 1000).toFixed(2)} Kz</span>
-                        <span className="text-xl font-bold text-green-600">{(6990 + i * 1000).toFixed(2)} Kz</span>
-                      </div>
-
-                      {/* Botões */}
-                      <div className="flex gap-2">
-                        <button className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-white border-2 border-blue-600 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition-colors group">
-                          <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          Ver
-                        </button>
-                        <button
-                          onClick={() => setCartCount(prev => prev + 1)}
-                          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white font-medium hover:bg-green-700 transition-colors group"
-                        >
-                          <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          Adicionar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={i} id={i} name={`Produto ${i + 1}`} price={6990 + i * 1000} image={farmaco} onAdd={() => setCartCount(prev => prev + 1)} />
               ))}
             </div>
           </div>
