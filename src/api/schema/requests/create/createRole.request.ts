@@ -1,0 +1,3 @@
+interface CreateRoleRequest {
+    name: string,
+ }

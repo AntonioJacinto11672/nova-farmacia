@@ -1,0 +1,3 @@
+interface CreateUserResponse{
+  id:string
+} 

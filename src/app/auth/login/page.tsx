@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
-import { login } from '@/lib/auth'
+import UserService from '@/api/services/user.service'
+import RoleService from '@/api/services/role.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,10 +17,26 @@ import { Heart, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import logo from '@/assets/logo/NEtFarma.png'
 
+export interface userResponseNew {
+  data: DataUser
+}
+
+export interface DataUser {
+  id: string
+  email: string
+  userName: string
+  phoneNumber: string
+  role: string
+  person: any
+}
+
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const userService = new UserService()
+  const roleService = new RoleService()
 
   const {
     register,
@@ -34,24 +51,49 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const result = await login(data.email, data.password)
+      const response = await userService.signIn(data.email, data.password)
 
-      console.log(result)
-      if (result) {
+      if (response.error) {
+        console.log(response.error);
+        setError(response.error.message && response.error.message !== "record not found" ? response.error.message : 'Email ou senha incorretos')
+        return
+      }
+
+      if (response.data?.data) {
+        const { accessToken } = response.data.data
+
         // Salvar token no localStorage
-        localStorage.setItem('token', result.token)
-        localStorage.setItem('user', JSON.stringify(result.user))
+        localStorage.setItem('token', accessToken)
 
-        // Redirecionar baseado no role
-        if (result.user.role === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/dashboard')
+        // Buscar informações do usuário
+        try {
+          const userInfoResponse = await userService.getUserInfo(accessToken)
+
+          if (userInfoResponse.data) {
+            const userInfo = userInfoResponse.data as any
+
+            //console.log("userInfo hire", userInfo)
+
+            localStorage.setItem('user', JSON.stringify(userInfo))
+
+            // Redirecionar baseado no role
+            if (userInfo.role === 'Administrador') {
+              router.push('/admin')
+            } else {
+              router.push('/dashboard')
+            }
+          } else {
+            setError('Erro ao obter informações do usuário')
+          }
+        } catch (userInfoError) {
+          console.error('Erro ao buscar informações do usuário:', userInfoError)
+          setError('Erro ao obter informações do usuário')
         }
       } else {
-        setError('Email ou senha incorretos')
+        setError('Resposta inválida do servidor')
       }
     } catch (err) {
+      console.error('Erro no login:', err)
       setError('Erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)
@@ -65,7 +107,9 @@ export default function LoginPage() {
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-60 h-5 rounded-full">
             {/*  <Heart className="w-8 h-8 text-white" /> */}
-            <Image src={logo} alt="NetFarma Logo" width={350} height={50} />
+            <Link href="/">
+              <Image src={logo} alt="NetFarma Logo" width={160} height={50} />
+            </Link>
           </div>
         </div>
 
@@ -131,13 +175,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Demo credentials */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800 font-medium mb-2">Credenciais de Demo:</p>
-              <p className="text-xs text-blue-700">
-                Admin: admin@netfarma.com / admin123
-              </p>
-            </div>
+            
           </CardContent>
         </Card>
       </div>

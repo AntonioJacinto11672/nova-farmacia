@@ -1,0 +1,3 @@
+interface CreateProviderRequest{
+    name: string
+}

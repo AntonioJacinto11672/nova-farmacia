@@ -17,8 +17,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
-    if (userData) {
+    const token = localStorage.getItem('token')
+    
+    if (userData && token) {
       setUser(JSON.parse(userData))
+    } else {
+      // Se não há token, redirecionar para login
+      window.location.href = '/auth/login'
     }
   }, [])
 

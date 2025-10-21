@@ -17,7 +17,20 @@ export default function AdminPage() {
 
   useEffect(() => {
     const userData = localStorage.getItem('user')
-    if (userData) setUser(JSON.parse(userData))
+    const token = localStorage.getItem('token')
+    
+    if (userData && token) {
+      const parsedUser = JSON.parse(userData)
+      if (parsedUser.role === 'Administrador') {
+        setUser(parsedUser)
+      } else {
+        // Se não é admin, redirecionar para dashboard
+        window.location.href = '/dashboard'
+      }
+    } else {
+      // Se não há token, redirecionar para login
+      window.location.href = '/auth/login'
+    }
   }, [])
 
   const handleLogout = () => {
