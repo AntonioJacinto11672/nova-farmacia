@@ -15,6 +15,15 @@ import Link from 'next/link'
 import { Heart, AlertCircle, CheckCircle } from 'lucide-react'
 import logo from '@/assets/logo/NEtFarma.png'
 import Image from 'next/image'
+import UserService from '@/api/services/user.service'
+import PersonService from '@/api/services/person.service'
+import toast from 'react-hot-toast'
+
+
+
+const userService = new UserService();
+
+const personService = new PersonService();
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -31,30 +40,52 @@ export default function RegisterPage() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const result = await registerUser({
-        name: data.name,
-        email: data.email,
-        age: 22,
-        sex: "M",
-        address: data.address,
-        phone: data.phone,
-        password: data.password,
-      }) 
 
-      // Salvar token no localStorage
-      localStorage.setItem('token', result.token)
-      localStorage.setItem('user', JSON.stringify(result.user))
+      const result = await userService.createClient(data.email, data.password, data.phone)
 
-      setSuccess(true)
+      console.log("Resultado criação usuário", result)
+      if (result.error) {
+        setError(result.error.message && result.error.message !== "record not found" ? result.error.message : 'Erro ao criar conta')
+        return
+      }
 
-      // Redirecionar após 2 segundos
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 2000)
+      if (result.data) {
+        let userId = result.data.data.id
+        if (!userId) {
+          setError('Erro ao criar conta. Tente novamente.')
+          return
+        }
+
+        const resultCreatePerson = await personService.createPerson(data.name, data.birthDate, data.sex, userId)
+        //console.log("Resultado criação pessoa", resultCreatePerson)
+        if (resultCreatePerson.error) {
+         console.log("Erro criação pessoa", resultCreatePerson.error)
+          setError('Erro ao criar dados pessoais. Tente novamente.')
+          return
+        }
+
+        if (resultCreatePerson.data) {
+
+          //console.log(result)
+          toast.success('Account created')
+          //console.log("Criar dados pessoais", resultCreatePerson)
+
+          setIsLoading(true)
+          setSuccess(true)
+          
+           // Redirecionar após 2 segundos
+         setTimeout(() => {
+           router.push("/auth/login")
+         }, 2000)
+        }
+      }
+
+     
 
     } catch (err) {
       setError('Erro ao criar conta. Tente novamente.')
@@ -92,7 +123,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mt-1">
           <div className="inline-flex items-center justify-center w-60 h-5 rounded-full">
-            
+
             <Image src={logo} alt="NetFarma Logo" width={350} height={50} />
           </div>
 
@@ -129,16 +160,16 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="age">Idade</Label>
+                  <Label htmlFor="birthDate">Data de Naascimento</Label>
                   <Input
-                    id="age"
-                    type="number"
-                    placeholder="25"
-                    {...register('age', { valueAsNumber: true })}
-                    className={errors.age ? 'border-red-500' : ''}
+                    id="birthDate"
+                    placeholder="Seu nome completo"
+                    type="date"
+                    {...register('birthDate')}
+                    className={errors.birthDate ? 'border-red-500' : ''}
                   />
-                  {errors.age && (
-                    <p className="text-sm text-red-500">{errors.age.message}</p>
+                  {errors.birthDate && (
+                    <p className="text-sm text-red-500">{errors.birthDate.message}</p>
                   )}
                 </div>
 

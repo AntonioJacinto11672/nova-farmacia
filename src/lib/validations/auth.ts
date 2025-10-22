@@ -7,7 +7,9 @@ export const loginSchema = z.object({
 
 export const registerSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  age: z.number().min(18, "Idade deve ser maior que 18 anos").max(120, "Idade inválida"),
+  birthDate: z.string("Campo obrigatório").refine((date) => !isNaN(Date.parse(date)), {
+    message: "Data de nascimento inválida",
+  }),
   sex: z.enum(["M", "F", "Outro"], {
     required_error: "Selecione o sexo",
   }),

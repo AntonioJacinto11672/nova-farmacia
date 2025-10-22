@@ -78,9 +78,9 @@ export default function LoginPage() {
 
             // Redirecionar baseado no role
             if (userInfo.role === 'Administrador') {
-              router.push('/admin')
+              router.replace('/admin')
             } else {
-              router.push('/dashboard')
+              router.replace('/')
             }
           } else {
             setError('Erro ao obter informações do usuário')
