@@ -1,6 +1,6 @@
 
 'use client'
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import logoImg from '@/assets/logo/NEtFarma.png';
@@ -10,6 +10,12 @@ import banner3 from '@/assets/carrocel/c3.jpeg';
 import farmaco from '@/assets/farmaco.jpg';
 import ProductCard from '@/components/ui/ProductCard'
 import chiringa from '@/assets/carrocel/about.jpg';
+import ProviderService from '@/api/services/provider.service';
+import MedicineService from '@/api/services/medicine.service';
+import toast from 'react-hot-toast';
+
+const useMedicine = new MedicineService();
+const useProvider = new ProviderService();
 const categories = [
   { name: 'Pele e Estética', slug: 'pele-e-estetica' },
   { name: 'Nutrição e Saúde', slug: 'nutricao-e-saude' },
@@ -19,6 +25,7 @@ const categories = [
   { name: 'Sexualidade', slug: 'sexualidade' },
   { name: 'Eletrónicos', slug: 'eletronicos' },
 ];
+
 
 function HomePage() {
   // Carousel state for full-width carousel
@@ -30,12 +37,93 @@ function HomePage() {
   const [cartCount, setCartCount] = React.useState(0);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [current, setCurrent] = React.useState(0);
+  const [allProduct, setAllProduct] = useState<MedicineResponse[]>([]);
+  const [allProviders, setAllProviders] = useState<ProviderResponse[]>([])
+  const [pageSize, setPageSize] = useState<number>(10)
+  const [pageSizeProvider, setPageSizeProvider] = useState<number>(10)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
 
   React.useEffect(() => {
     const interval = setInterval(() => setCurrent((c) => (c + 1) % banners.length), 4000);
     return () => clearInterval(interval);
   }, [banners.length]);
 
+  //Pegar os dados od Produtos na bd
+  React.useEffect(() => {
+    loadProducts()
+    //console.log("Aqui não está mudar", pageSize)
+  }, [pageSize]);
+
+
+  /* Const pegar todos os Produtos */
+
+  const loadProducts = () => {
+    try {
+      let toastId = toast.loading("Carregar os produtos...")
+
+      useMedicine.getAllMediciine(pageSize).then(e => {
+
+        if (e.error) {
+          setError(e.error);
+          setLoading(false);
+          console.log("Deu erro", e.error);
+          toast.error("Erro ao carregar os  Productos")
+
+        } else {
+          if (e.data) {
+            setAllProduct(e.data.data);
+
+            //console.log("Peguei os dados >>>>>", e.data);
+            toast.success("Productos carregados com sucesso!")
+          }
+          setLoading(false);
+        }
+
+      }).catch(err => {
+        setError(err);
+        setLoading(false);
+      }).finally(() => {
+        toast.dismiss(toastId)
+        setLoading(false)
+      });
+
+      useProvider.getAllProvider(pageSizeProvider).then(provider => {
+        if (provider.data) {
+          setAllProviders(provider.data.data)
+
+        }
+      })
+    } catch (error) {
+      console.log("Error: ", error)
+
+    }
+  }
+
+  /*   const handleMorePage = () => {
+      setPageSize(5 + pageSize)
+    } */
+
+  /* acresentar paginas  aos produtos*/
+
+  const handleMorePage = () => {
+    setPageSize(prev => prev + 5)
+    //console.log("Hello Page", pageSize)
+
+  }
+
+
+  /* Desminuir paginas  aos produtos*/
+
+  const handleLessPage = () => {
+    setPageSize(prev => prev - 5)
+    //console.log("Hello Page", pageSize)
+
+  }
+
+  const handleMorePageProvider = () => {
+    setPageSizeProvider(5 + pageSize)
+  }
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -216,8 +304,8 @@ function HomePage() {
               </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <ProductCard key={i} id={i} name={`Produto ${i + 1}`} price={6990 + i * 1000} image={farmaco} onAdd={() => setCartCount(prev => prev + 1)} />
+              {allProduct.map((product) => (
+                <ProductCard key={product.id} id={product.id} name={product.name} price={product.price} image={farmaco} description={product.description} isActive={product.isActive} medicineCategories={product.medicineCategories} />
               ))}
             </div>
           </div>

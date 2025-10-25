@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,83 +9,75 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Heart, ShoppingCart, Upload, Star, ArrowLeft, Plus, Minus, Camera, FileImage } from 'lucide-react'
-import Header from '@/components/include/Header'
-import Footer from '@/components/include/Footer'
-import farmaco from '@/assets/farmaco.jpg'
-import ProductCard from '@/components/ui/ProductCard'
+import MedicineService from '@/api/services/medicine.service'
+import { useCart } from '@/hooks/useCart'
+import logoImg from '@/assets/logo/NEtFarma.png'
 
-// Dados mockados do produto
-const productData = {
-  id: '1',
-  name: 'Paracetamol 500mg',
-  price: 45.90,
-  originalPrice: 52.90,
-  discount: 13,
-  rating: 4.5,
-  reviews: 128,
-  description: 'Paracetamol 500mg é um analgésico e antitérmico indicado para o alívio de dores leves a moderadas e redução da febre. Ideal para dores de cabeça, dores musculares, dores de dente e sintomas de gripe e resfriado.',
-  category: 'Analgésicos',
-  brand: 'Bayer',
-  requiresPrescription: true,
-  stock: 15,
-  images: [
-    farmaco,
-    farmaco,
-    farmaco
-  ],
-  specifications: {
-    'Princípio Ativo': 'Paracetamol 500mg',
-    'Forma Farmacêutica': 'Comprimido',
-    'Quantidade': '20 comprimidos',
-    'Validade': '24 meses',
-    'Registro': 'ANVISA 1.1234.0001',
-    'Fabricante': 'Bayer S.A.'
-  },
-  instructions: [
-    'Tomar 1-2 comprimidos a cada 4-6 horas',
-    'Não exceder 8 comprimidos em 24 horas',
-    'Tomar com água',
-    'Não usar por mais de 3 dias sem orientação médica'
-  ]
+interface Medicine {
+  id: string
+  name: string
+  description: string
+  quantity: number
+  price: number
+  providerId: string
+  isActive: boolean
+  medicineCategories?: any
+  medicineFiles?: any
 }
 
-const relatedProducts = [
-  {
-    id: '2',
-    name: 'Ibuprofeno 400mg',
-    price: 38.50,
-    image: farmaco,
-    rating: 4.3
-  },
-  {
-    id: '3',
-    name: 'Aspirina 500mg',
-    price: 29.90,
-    image: farmaco,
-    rating: 4.1
-  },
-  {
-    id: '4',
-    name: 'Dipirona 500mg',
-    price: 25.80,
-    image: farmaco,
-    rating: 4.4
-  }
-]
-
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const [medicine, setMedicine] = useState<Medicine | null>(null)
+  const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false)
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  
+  const { handleAddProductToCart } = useCart()
+  const medicineService = new MedicineService()
+
+  useEffect(() => {
+    fetchMedicine()
+  }, [params.id])
+
+  const fetchMedicine = async () => {
+    try {
+      setLoading(true)
+      const response = await medicineService.getMediciineById(params.id)
+      
+      if (response.data) {
+        setMedicine(response.data)
+      } else {
+        console.error('Erro ao buscar medicamento:', response.error)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar medicamento:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleAddToCart = () => {
+    if (!medicine) return
+    
     setIsAddingToCart(true)
-    // Simular adição ao carrinho
+    
+    const cartProduct = {
+      id: medicine.id,
+      name: medicine.name,
+      description: medicine.description,
+      quantity: quantity,
+      price: medicine.price,
+      isActive: medicine.isActive,
+      medicineCategories: medicine.medicineCategories,
+      medicineFiles: medicine.medicineFiles
+    }
+    
+    handleAddProductToCart(cartProduct)
+    
     setTimeout(() => {
       setIsAddingToCart(false)
-      alert(`${quantity} unidade(s) de ${productData.name} adicionada(s) ao carrinho!`)
     }, 1000)
   }
 
@@ -112,10 +104,51 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     }).format(price)
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando produto...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!medicine) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
+          <Link href="/products" className="text-blue-600 hover:underline">
+            Voltar aos produtos
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Header />
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                <Heart className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">NETFARMA</h1>
+            </Link>
+            <nav className="flex items-center gap-6 text-sm text-gray-700">
+              <Link href="/" className="hover:text-blue-600">Início</Link>
+              <Link href="/products" className="hover:text-blue-600">Produtos</Link>
+              <Link href="/support" className="hover:text-blue-600">Suporte</Link>
+              <Link href="/auth/login" className="hover:text-blue-600">Entrar</Link>
+            </nav>
+          </div>
+        </div>
+      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -124,85 +157,45 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           <span>/</span>
           <Link href="/products" className="hover:text-blue-600">Produtos</Link>
           <span>/</span>
-          <Link href={`/category/${productData.category.toLowerCase()}`} className="hover:text-blue-600">{productData.category}</Link>
-          <span>/</span>
-          <span className="text-gray-900">{productData.name}</span>
+          <span className="text-gray-900">{medicine.name}</span>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Imagens do Produto */}
           <div className="space-y-4">
             <div className="aspect-square bg-white rounded-lg border overflow-hidden">
-              <Image
-                src={productData.images[selectedImage]}
-                alt={productData.name}
-                width={500}
-                height={500}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="flex gap-2">
-              {productData.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`w-20 h-20 rounded-lg border-2 overflow-hidden ${
-                    selectedImage === index ? 'border-blue-600' : 'border-gray-200'
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${productData.name} ${index + 1}`}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-contain"
-                  />
-                </button>
-              ))}
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Heart className="w-16 h-16 text-blue-600" />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Informações do Produto */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-gray-600">{productData.brand}</span>
-                <span className="text-sm text-gray-400">•</span>
-                <span className="text-sm text-gray-600">{productData.category}</span>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{productData.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">{medicine.name}</h1>
               
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(productData.rating)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                      }`}
+                      className="w-5 h-5 text-yellow-400 fill-current"
                     />
                   ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    {productData.rating} ({productData.reviews} avaliações)
-                  </span>
+                  <span className="ml-2 text-sm text-gray-600">4.5 (128 avaliações)</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-3xl font-bold text-gray-900">
-                  {formatPrice(productData.price)}
-                </span>
-                <span className="text-xl text-gray-500 line-through">
-                  {formatPrice(productData.originalPrice)}
-                </span>
-                <span className="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">
-                  -{productData.discount}%
+                  {formatPrice(medicine.price)}
                 </span>
               </div>
 
-              <p className="text-gray-600 leading-relaxed">{productData.description}</p>
+              <p className="text-gray-600 leading-relaxed">{medicine.description}</p>
             </div>
 
             {/* Quantidade e Botões */}
@@ -230,13 +223,13 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                     variant="outline"
                     size="sm"
                     onClick={() => setQuantity(quantity + 1)}
-                    disabled={quantity >= productData.stock}
+                    disabled={quantity >= medicine.quantity}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <span className="text-sm text-gray-600">
-                  {productData.stock} disponíveis
+                  {medicine.quantity} disponíveis
                 </span>
               </div>
 
@@ -255,71 +248,50 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 </Button>
               </div>
 
-              {productData.requiresPrescription && (
-                <Alert>
-                  <FileImage className="h-4 w-4" />
-                  <AlertDescription>
-                    Este medicamento requer receita médica. 
-                    <Button
-                      variant="link"
-                      onClick={() => setShowPrescriptionModal(true)}
-                      className="p-0 h-auto ml-1"
-                    >
-                      Enviar receita
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
+              <Alert>
+                <FileImage className="h-4 w-4" />
+                <AlertDescription>
+                  Este medicamento pode requerer receita médica. 
+                  <Button
+                    variant="link"
+                    onClick={() => setShowPrescriptionModal(true)}
+                    className="p-0 h-auto ml-1"
+                  >
+                    Enviar receita
+                  </Button>
+                </AlertDescription>
+              </Alert>
             </div>
 
             {/* Especificações */}
             <Card>
               <CardHeader>
-                <CardTitle>Especificações</CardTitle>
+                <CardTitle>Informações do Produto</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(productData.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between">
-                      <span className="text-gray-600">{key}:</span>
-                      <span className="font-medium">{value}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">ID:</span>
+                    <span className="font-medium">{medicine.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Preço:</span>
+                    <span className="font-medium">{formatPrice(medicine.price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Estoque:</span>
+                    <span className="font-medium">{medicine.quantity} unidades</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status:</span>
+                    <span className="font-medium">{medicine.isActive ? 'Disponível' : 'Indisponível'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Instruções de Uso */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Instruções de Uso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {productData.instructions.map((instruction, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                  <span>{instruction}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Produtos Relacionados */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Produtos Relacionados</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} id={Number(product.id)} name={product.name} price={product.price} image={product.image} onAdd={(id) => alert(`Adicionado produto ${id} ao carrinho (simulado)`)} />
-            ))}
-          </div>
-        </div>
       </main>
-
-      <Footer />
 
       {/* Modal de Upload de Receita */}
       {showPrescriptionModal && (

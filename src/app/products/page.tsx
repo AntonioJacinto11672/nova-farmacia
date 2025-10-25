@@ -7,6 +7,11 @@ import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
 import ProductCard from '@/components/ui/ProductCard'
 
+import ProviderService from '@/api/services/provider.service';
+import MedicineService from '@/api/services/medicine.service';
+
+const useMedicine = new MedicineService();
+const useProvider = new ProviderService();
 const CATEGORIES = [
     { name: 'Todas', slug: 'all' },
     { name: 'Pele e Estética', slug: 'pele-e-estetica' },
@@ -48,6 +53,12 @@ export default function ProductsPage() {
     const [search, setSearch] = React.useState<string>('')
     const [minPrice, setMinPrice] = React.useState<number | ''>('')
     const [maxPrice, setMaxPrice] = React.useState<number | ''>('')
+    const [allProduct, setAllProduct] = useState<MedicineResponse[]>([]);
+    const [allProviders, setAllProviders] = useState<ProviderResponse[]>([])
+    const [pageSize, setPageSize] = useState<number>(10)
+    const [pageSizeProvider, setPageSizeProvider] = useState<number>(10)
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<ApiError | null>(null);
     // pagination / load-more
     const PAGE_SIZE = 9 // show at least 9 products initially
     const [visibleCount, setVisibleCount] = React.useState<number>(PAGE_SIZE)
@@ -70,6 +81,82 @@ export default function ProductsPage() {
         setVisibleCount((v) => Math.min(filtered.length, v + 1)) // show one more per click
     }
 
+
+    //Pegar os dados od Produtos na bd
+  React.useEffect(() => {
+    loadProducts()
+    //console.log("Aqui não está mudar", pageSize)
+  }, [pageSize]);
+
+
+  /* Const pegar todos os Produtos */
+
+  const loadProducts = () => {
+    try {
+      let toastId = toast.loading("Carregar os produtos...")
+
+      useMedicine.getAllMediciine(pageSize).then(e => {
+
+        if (e.error) {
+          setError(e.error);
+          setLoading(false);
+          console.log("Deu erro", e.error);
+          toast.error("Erro ao carregar os  Productos")
+
+        } else {
+          if (e.data) {
+            setAllProduct(e.data.data);
+
+            //console.log("Peguei os dados >>>>>", e.data);
+            toast.success("Productos carregados com sucesso!")
+          }
+          setLoading(false);
+        }
+
+      }).catch(err => {
+        setError(err);
+        setLoading(false);
+      }).finally(() => {
+        toast.dismiss(toastId)
+        setLoading(false)
+      });
+
+      useProvider.getAllProvider(pageSizeProvider).then(provider => {
+        if (provider.data) {
+          setAllProviders(provider.data.data)
+
+        }
+      })
+    } catch (error) {
+      console.log("Error: ", error)
+
+    }
+  }
+
+  /*   const handleMorePage = () => {
+      setPageSize(5 + pageSize)
+    } */
+
+  /* acresentar paginas  aos produtos*/
+
+  const handleMorePage = () => {
+    setPageSize(prev => prev + 5)
+    //console.log("Hello Page", pageSize)
+
+  }
+
+
+  /* Desminuir paginas  aos produtos*/
+
+  const handleLessPage = () => {
+    setPageSize(prev => prev - 5)
+    //console.log("Hello Page", pageSize)
+
+  }
+
+  const handleMorePageProvider = () => {
+    setPageSizeProvider(5 + pageSize)
+  }
     return (
         <div className="min-h-screen bg-gray-50">
 
