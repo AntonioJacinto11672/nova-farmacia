@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image, { type StaticImageData } from 'next/image'
 import farmaco from '@/assets/farmaco.jpg'
@@ -9,6 +9,7 @@ import ProductCard from '@/components/ui/ProductCard'
 
 import ProviderService from '@/api/services/provider.service';
 import MedicineService from '@/api/services/medicine.service';
+import toast from 'react-hot-toast'
 
 const useMedicine = new MedicineService();
 const useProvider = new ProviderService();
@@ -24,7 +25,7 @@ const CATEGORIES = [
 ]
 
 type Product = {
-    id: number
+    id: string
     name: string
     price: number
     image: StaticImageData | string
@@ -32,18 +33,18 @@ type Product = {
 }
 
 const SAMPLE_PRODUCTS: Product[] = [
-    { id: 1, name: 'Paracetamol 500mg', price: 1200, image: farmaco, category: 'pele-e-estetica' },
-    { id: 2, name: 'Ibuprofeno 400mg', price: 1800, image: farmaco, category: 'nutricao-e-saude' },
-    { id: 3, name: 'Vitamina C 1g', price: 900, image: farmaco, category: 'gravidez' },
-    { id: 4, name: 'Xarope para Tosse', price: 2500, image: farmaco, category: 'bebes' },
-    { id: 5, name: 'Pomada Antisséptica', price: 1500, image: farmaco, category: 'suplementacao' },
-    { id: 6, name: 'Álcool Gel 70%', price: 800, image: farmaco, category: 'sexualidade' },
-    { id: 7, name: 'Termômetro Digital', price: 3500, image: farmaco, category: 'eletronicos' },
-    { id: 8, name: 'Máscara Cirúrgica (cx 50)', price: 2000, image: farmaco, category: 'pele-e-estetica' },
-    { id: 9, name: 'Sabonete Antisséptico', price: 1100, image: farmaco, category: 'nutricao-e-saude' },
-    { id: 10, name: 'Spray Nasal', price: 1700, image: farmaco, category: 'gravidez' },
-    { id: 11, name: 'Protetor Solar', price: 3200, image: farmaco, category: 'pele-e-estetica' },
-    { id: 12, name: 'Gaze Estéril', price: 600, image: farmaco, category: 'bebes' },
+    { id: "1", name: 'Paracetamol 500mg', price: 1200, image: farmaco, category: 'pele-e-estetica' },
+    { id: "2", name: 'Ibuprofeno 400mg', price: 1800, image: farmaco, category: 'nutricao-e-saude' },
+    { id: "3", name: 'Vitamina C 1g', price: 900, image: farmaco, category: 'gravidez' },
+    { id: "4", name: 'Xarope para Tosse', price: 2500, image: farmaco, category: 'bebes' },
+    { id: "5", name: 'Pomada Antisséptica', price: 1500, image: farmaco, category: 'suplementacao' },
+    { id: "6", name: 'Álcool Gel 70%', price: 800, image: farmaco, category: 'sexualidade' },
+    { id: "7", name: 'Termômetro Digital', price: 3500, image: farmaco, category: 'eletronicos' },
+    { id: "8", name: 'Máscara Cirúrgica (cx 50)', price: 2000, image: farmaco, category: 'pele-e-estetica' },
+    { id: "9", name: 'Sabonete Antisséptico', price: 1100, image: farmaco, category: 'nutricao-e-saude' },
+    { id: "10", name: 'Spray Nasal', price: 1700, image: farmaco, category: 'gravidez' },
+    { id: "11", name: 'Protetor Solar', price: 3200, image: farmaco, category: 'pele-e-estetica' },
+    { id: "12", name: 'Gaze Estéril', price: 600, image: farmaco, category: 'bebes' },
 ]
 
 export default function ProductsPage() {
@@ -240,8 +241,8 @@ export default function ProductsPage() {
                                     <div className="col-span-full bg-white p-6 rounded shadow text-center">Nenhum produto encontrado.</div>
                                 )}
 
-                                {filtered.slice(0, visibleCount).map((p) => (
-                                    <ProductCard key={p.id} id={p.id} name={p.name} price={p.price} image={farmaco} onAdd={() => setCartCount(prev => prev + 1)} />
+                                {filtered.slice(0, visibleCount).map((product) => (
+                                    <ProductCard key={product.id} id={product.id} name={product.name} price={product.price} image={farmaco} description={product.name} isActive={true} medicineCategories={product.category} />
                                 ))}
                             </div>
                             {/* Load more button */}

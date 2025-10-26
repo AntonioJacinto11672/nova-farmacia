@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,10 +8,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Heart, ShoppingCart, Upload, Star, ArrowLeft, Plus, Minus, Camera, FileImage } from 'lucide-react'
+import { Heart, ShoppingCart, Upload, Star, ArrowLeft, Plus, Minus, Camera, FileImage, SquareCheckBig } from 'lucide-react'
 import MedicineService from '@/api/services/medicine.service'
 import { useCart } from '@/hooks/useCart'
 import logoImg from '@/assets/logo/NEtFarma.png'
+import Header from '@/components/include/Header'
+import Footer from '@/components/include/Footer'
+import ProductCard from '@/components/ui/ProductCard'
+import toast from 'react-hot-toast'
+import farmaco from '@/assets/farmaco.jpg';
+import ModalenviarReceita from '@/components/ui/ModalenviarReceita'
+import { useRouter } from 'next/router'
+
+const useMedicine = new MedicineService();
 
 interface Medicine {
   id: string
@@ -25,7 +34,15 @@ interface Medicine {
   medicineFiles?: any
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+ 
+
+export default function ProductDetailPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = React.use(params)
+ 
   const [medicine, setMedicine] = useState<Medicine | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
@@ -33,21 +50,79 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false)
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
-  
-  const { handleAddProductToCart } = useCart()
+  const [allProduct, setAllProduct] = useState<MedicineResponse[]>([]);
+  const [error, setError] = useState<ApiError | null>(null);
+
+  const [pageSize, setPageSize] = useState<number>(10)
+
+
+
+  //Pegar os dados od Produtos na bd
+  React.useEffect(() => {
+    loadProducts()
+    //console.log("Aqui não está mudar", pageSize)
+  }, [pageSize]);
+
+
+  /* Const pegar todos os Produtos */
+
+  const loadProducts = () => {
+    try {
+      let toastId = toast.loading("Carregar os produtos...")
+
+      useMedicine.getAllMediciine(pageSize).then(e => {
+
+        if (e.error) {
+          setError(e.error);
+          setLoading(false);
+          console.log("Deu erro", e.error);
+          toast.error("Erro ao carregar os  Productos")
+
+        } else {
+          if (e.data) {
+            setAllProduct(e.data.data);
+
+            //console.log("Peguei os dados >>>>>", e.data);
+            toast.success("Productos carregados com sucesso!")
+          }
+          setLoading(false);
+        }
+
+      }).catch(err => {
+        setError(err);
+        setLoading(false);
+      }).finally(() => {
+        toast.dismiss(toastId)
+        setLoading(false)
+      });
+
+    } catch (error) {
+      console.log("Error: ", error)
+
+    }
+  }
+
+  /* Product in cart */
+
+  const [isProductInCart, setIsProductInCart] = useState(false)
+
+
+  const { handleAddProductToCart, cartProducts } = useCart()
   const medicineService = new MedicineService()
+
 
   useEffect(() => {
     fetchMedicine()
-  }, [params.id])
+
+  }, [id])
 
   const fetchMedicine = async () => {
     try {
       setLoading(true)
-      const response = await medicineService.getMediciineById(params.id)
-      
+      const response = await medicineService.getMediciineById(id)
+
       if (response.data) {
-        setMedicine(response.data)
+        setMedicine(response.data.data)
       } else {
         console.error('Erro ao buscar medicamento:', response.error)
       }
@@ -60,9 +135,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
   const handleAddToCart = () => {
     if (!medicine) return
-    
+
     setIsAddingToCart(true)
-    
+
     const cartProduct = {
       id: medicine.id,
       name: medicine.name,
@@ -73,9 +148,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       medicineCategories: medicine.medicineCategories,
       medicineFiles: medicine.medicineFiles
     }
-    
+
     handleAddProductToCart(cartProduct)
-    
+
     setTimeout(() => {
       setIsAddingToCart(false)
     }, 1000)
@@ -104,6 +179,20 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     }).format(price)
   }
 
+
+
+  useEffect(() => {
+    setIsProductInCart(false)
+    if (cartProducts) {
+      const exintingIndex = cartProducts.findIndex((item) => item.id === id)
+      if (exintingIndex > -1) {
+        setIsProductInCart(true)
+      }
+    }
+
+
+  }, [cartProducts])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -131,24 +220,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">NETFARMA</h1>
-            </Link>
-            <nav className="flex items-center gap-6 text-sm text-gray-700">
-              <Link href="/" className="hover:text-blue-600">Início</Link>
-              <Link href="/products" className="hover:text-blue-600">Produtos</Link>
-              <Link href="/support" className="hover:text-blue-600">Suporte</Link>
-              <Link href="/auth/login" className="hover:text-blue-600">Entrar</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -176,7 +248,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{medicine.name}</h1>
-              
+
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
@@ -234,33 +306,37 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               </div>
 
               <div className="flex gap-4">
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={isAddingToCart}
-                  className="flex-1"
-                  size="lg"
-                >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {isAddingToCart ? 'Adicionando...' : 'Adicionar ao Carrinho'}
-                </Button>
-                <Button variant="outline" size="lg">
-                  <Heart className="w-5 h-5" />
-                </Button>
+                {
+                  isProductInCart ? (
+                    <Button
+                      disabled
+                      className="flex-1"
+                    >
+                      Adicionado ao carrinho
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleAddToCart}
+                      className="flex-1"
+                      disabled={isAddingToCart}
+                    >
+                      {isAddingToCart ? 'Adicionando...' : 'Adicionar ao carrinho'}
+                    </Button>
+                  )
+                }
               </div>
 
-              <Alert>
-                <FileImage className="h-4 w-4" />
-                <AlertDescription>
-                  Este medicamento pode requerer receita médica. 
-                  <Button
-                    variant="link"
-                    onClick={() => setShowPrescriptionModal(true)}
-                    className="p-0 h-auto ml-1"
-                  >
-                    Enviar receita
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              {
+                isProductInCart && <Alert>
+                  <SquareCheckBig className="h-4 w-4" color='green' />
+                  <AlertDescription className='text-green-500'>
+                    Este medicamento Já está no carrinho.
+                    <Link href="/cart" className="underline ml-1 text-blue-700">ver carrinho</Link>
+
+                  </AlertDescription>
+
+                </Alert>
+              }
             </div>
 
             {/* Especificações */}
@@ -284,65 +360,44 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    <span className="font-medium">{medicine.isActive ? 'Disponível' : 'Indisponível'}</span>
+                    <span className="font-medium">{medicine.isActive ? <span className='text-green-500'>Disponível</span> : <span className='text-red-800'>Indisponível</span>}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* Produtos Relacionados */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Produtos Relacionados</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {allProduct && allProduct.map((product, index) => {
+
+              if (medicine.medicineCategories === product.medicineCategories && index < 3 && product.id !== medicine.id) {
+
+                console.log(index, product.name, " - Categoria: ", product.medicineCategories);
+                return (
+                  <ProductCard key={product.id} id={product.id} name={product.name} price={product.price} image={farmaco} description={product.description} isActive={product.isActive} medicineCategories={product.medicineCategories} />
+                )
+              }
+            })}
+          </div>
+        </div>
       </main>
 
       {/* Modal de Upload de Receita */}
       {showPrescriptionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Enviar Receita Médica</CardTitle>
-              <CardDescription>
-                Faça upload da sua receita médica para este medicamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <Label htmlFor="prescription" className="cursor-pointer">
-                  <span className="text-blue-600 hover:text-blue-700">
-                    Clique para selecionar ou arraste aqui
-                  </span>
-                </Label>
-                <Input
-                  id="prescription"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePrescriptionUpload}
-                  className="hidden"
-                />
-                {prescriptionFile && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    Arquivo selecionado: {prescriptionFile.name}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={handlePrescriptionSubmit}
-                  disabled={!prescriptionFile}
-                  className="flex-1"
-                >
-                  Enviar Receita
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPrescriptionModal(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <ModalenviarReceita
+          setShowPrescriptionModal={setShowPrescriptionModal}
+          prescriptionFile={prescriptionFile}
+          handlePrescriptionUpload={handlePrescriptionUpload}
+          handlePrescriptionSubmit={handlePrescriptionSubmit}
+        />
+      )
+      }
+
+      <Footer />
     </div>
   )
 }

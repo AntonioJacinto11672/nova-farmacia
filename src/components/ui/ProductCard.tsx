@@ -19,6 +19,7 @@ export default function ProductCard({ id, name, price, image, isActive, descript
     const router = useRouter();
     const [openModal, setOpenModal] = useState(false)
     const { handleAddProductToCart, cartProducts } = useCart()
+  
     /* Product in cart */
 
     const [isProductInCart, setIsProductInCart] = useState(false)
@@ -50,6 +51,10 @@ export default function ProductCard({ id, name, price, image, isActive, descript
     const handteste = () => {
         console.log("teste")
     }
+
+    const handleSeeMore = () => {
+        
+    }
     return (
         <div className="group rounded-xl bg-white flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
@@ -78,7 +83,7 @@ export default function ProductCard({ id, name, price, image, isActive, descript
                     </div>
 
                     <div className="flex gap-2">
-                        <button className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-white border-2 border-blue-600 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition-colors group">
+                        <button className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-white border-2 border-blue-600 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition-colors group" onClick={() => {router.push(`/products/${id}`)}}>
                             <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
