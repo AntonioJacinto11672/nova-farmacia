@@ -48,7 +48,6 @@ const SAMPLE_PRODUCTS: Product[] = [
 ]
 
 export default function ProductsPage() {
-    const [products] = React.useState<Product[]>(SAMPLE_PRODUCTS)
     const [cartCount, setCartCount] = React.useState<number>(0)
     const [selectedCategory, setSelectedCategory] = React.useState<string>('all')
     const [search, setSearch] = React.useState<string>('')
@@ -65,11 +64,17 @@ export default function ProductsPage() {
     const [visibleCount, setVisibleCount] = React.useState<number>(PAGE_SIZE)
 
 
-    const filtered = products.filter((p) => {
-        if (selectedCategory && selectedCategory !== 'all' && p.category !== selectedCategory) return false
+    const filtered = allProduct.filter((p) => {
+        // Ajustar conforme a estrutura real do MedicineResponse
+        if (selectedCategory && selectedCategory !== 'all') {
+            // Você precisará ajustar isso baseado na estrutura real dos dados
+            // const productCategory = p.medicineCategories?.name
+            // if (productCategory !== selectedCategory) return false
+        }
         if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
         if (minPrice !== '' && p.price < Number(minPrice)) return false
         if (maxPrice !== '' && p.price > Number(maxPrice)) return false
+        if (!p.isActive) return false // Filtrar apenas produtos ativos
         return true
     })
 
@@ -236,15 +241,33 @@ export default function ProductsPage() {
 
                         {/* Products */}
                         <section className="md:col-span-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filtered.length === 0 && (
-                                    <div className="col-span-full bg-white p-6 rounded shadow text-center">Nenhum produto encontrado.</div>
-                                )}
+                            {loading && (
+                                <div className="col-span-full bg-white p-6 rounded shadow text-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    Carregando produtos...
+                                </div>
+                            )}
+                            
+                            {!loading && filtered.length === 0 && (
+                                <div className="col-span-full bg-white p-6 rounded shadow text-center">Nenhum produto encontrado.</div>
+                            )}
 
-                                {filtered.slice(0, visibleCount).map((product) => (
-                                    <ProductCard key={product.id} id={product.id} name={product.name} price={product.price} image={farmaco} description={product.name} isActive={true} medicineCategories={product.category} />
-                                ))}
-                            </div>
+                            {!loading && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filtered.slice(0, visibleCount).map((product) => (
+                                        <ProductCard 
+                                            key={product.id} 
+                                            id={product.id} 
+                                            name={product.name} 
+                                            price={product.price} 
+                                            image={farmaco} 
+                                            description={product.description || product.name} 
+                                            isActive={product.isActive} 
+                                            medicineCategories={product.medicineCategories} 
+                                        />
+                                    ))}
+                                </div>
+                            )}
                             {/* Load more button */}
                             <div className="mt-6 flex items-center justify-center md:col-span-3">
                                 {visibleCount < filtered.length ? (
