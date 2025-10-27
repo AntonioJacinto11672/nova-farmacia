@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -37,6 +37,16 @@ export default function LoginPage() {
   const router = useRouter()
   const userService = new UserService()
   const roleService = new RoleService()
+
+  // Verificar se usuário já está logado
+  useEffect(() => {
+    const userData = localStorage.getItem('user')
+    const token = localStorage.getItem('token')
+    
+    if (userData && token) {
+      router.replace('/')
+    }
+  }, [router])
 
   const {
     register,

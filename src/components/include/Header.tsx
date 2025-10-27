@@ -1,22 +1,56 @@
 "use client"
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import logoImg from '@/assets/logo/NEtFarma.png'
 import { useCart } from '@/hooks/useCart'
 import { useRouter } from 'next/navigation'
+import { User, LogOut, Settings, ShoppingBag, ChevronDown } from 'lucide-react'
+
+interface User {
+  id: string
+  email: string
+  userName: string
+  phoneNumber: string
+  role: string
+}
 
 export default function Header() {
     const [cartCount, setCartCount] = React.useState(0);
     const [isDarkMode, setIsDarkMode] = React.useState(false);
+    const [user, setUser] = useState<User | null>(null)
+    const [showUserDropdown, setShowUserDropdown] = useState(false)
     const { cartTotalQty } = useCart()
     const router = useRouter()
+
     useEffect(() => {
-        console.log('cartTotalQty', cartTotalQty)
+        const userData = localStorage.getItem('user')
+        if (userData) {
+            setUser(JSON.parse(userData))
+        }
+
+        // Fechar dropdown ao clicar fora
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement
+            if (!target.closest('.user-dropdown')) {
+                setShowUserDropdown(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
+    const handleLogout = () => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setUser(null)
+        setShowUserDropdown(false)
+        router.push('/')
+    }
+
     return (
-        <header className="bg-white border-b z-10 sticky top-0">
+        <header className="bg-white border-b z-50 sticky top-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center">
                 {/* Logo */}
                 <div className="flex-shrink-0 flex items-center" style={{ minWidth: 120 }}>
@@ -76,7 +110,69 @@ export default function Header() {
                         </div>
                         <Link href="/products" className="hover:text-blue-600">Produtos</Link>
                         <Link href="/support" className="hover:text-blue-600">Suporte</Link>
-                        <Link href="/auth/login" className="hover:text-blue-600">Entrar</Link>
+                        
+                        {user ? (
+                            <div className="relative user-dropdown">
+                                <button
+                                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">{user.userName || user.email}</span>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                {showUserDropdown && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-50">
+                                        <div className="py-2">
+                                            <div className="px-4 py-2 border-b">
+                                                <p className="text-sm font-semibold text-gray-900">{user.userName || user.email}</p>
+                                                <p className="text-xs text-gray-500">{user.role}</p>
+                                            </div>
+                                            
+                                            <Link
+                                                href="/dashboard"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={() => setShowUserDropdown(false)}
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                Painel/Dashboard
+                                            </Link>
+                                            
+                                            <Link
+                                                href="/orders"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={() => setShowUserDropdown(false)}
+                                            >
+                                                <ShoppingBag className="w-4 h-4" />
+                                                Meus Pedidos
+                                            </Link>
+                                            
+                                            {user.role === 'admin' && (
+                                                <Link
+                                                    href="/admin"
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                    onClick={() => setShowUserDropdown(false)}
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                    Admin
+                                                </Link>
+                                            )}
+                                            
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                Sair
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link href="/auth/login" className="hover:text-blue-600">Entrar</Link>
+                        )}
 
                     </nav>
                 </div>
