@@ -126,7 +126,7 @@ function HomePage() {
     setPageSizeProvider(5 + pageSize)
   }
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
         <Header />
       
@@ -173,8 +173,8 @@ function HomePage() {
         <section>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold">Categorias</h2>
-              <button className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold transition">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Categorias</h2>
+              <button className="flex items-center gap-1 text-pharmacy-600 hover:text-pharmacy-700 dark:text-pharmacy-400 dark:hover:text-pharmacy-300 font-semibold transition">
                 Ver mais
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
@@ -189,44 +189,44 @@ function HomePage() {
               }
             `}</style>
               {categories.map((cat) => (
-                <Link key={cat.slug} href={`/category/${cat.slug}`} className="flex-shrink-0 group rounded-lg border bg-white px-6 py-4 min-w-[160px] flex flex-col items-center hover:shadow transition-all relative">
-                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 mb-2 flex items-center justify-center text-blue-700 text-xl font-bold">
+                <Link key={cat.slug} href={`/category/${cat.slug}`} className="flex-shrink-0 group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4 min-w-[160px] flex flex-col items-center hover:shadow-lg transition-all relative">
+                  <div className="h-14 w-14 rounded-full bg-gradient-to-br from-pharmacy-100 to-pharmacy-200 dark:from-pharmacy-800 dark:to-pharmacy-900 mb-2 flex items-center justify-center text-pharmacy-700 dark:text-pharmacy-300 text-xl font-bold">
                     {cat.name[0]}
                   </div>
-                  <div className="font-medium group-hover:text-blue-600 text-center text-sm">{cat.name}</div>
+                  <div className="font-medium group-hover:text-pharmacy-600 dark:group-hover:text-pharmacy-400 text-center text-sm text-gray-900 dark:text-gray-100">{cat.name}</div>
                 </Link>
               ))}
             </div>
           </div>
         </section>
         {/* Destaques */}
-        <section className="bg-white border-y">
+        <section className="bg-white dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-3 gap-6">
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
               <div className="relative h-40">
                 <Image src={banner2} alt="Destaque 1" fill className="object-cover" />
               </div>
               <div className="p-6">
-                <div className="font-semibold">Imunidade & Vitaminas</div>
-                <div className="text-sm text-gray-600">Cuide do seu dia a dia</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Imunidade & Vitaminas</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Cuide do seu dia a dia</div>
               </div>
             </div>
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
               <div className="relative h-40">
                 <Image src={banner3} alt="Destaque 2" fill className="object-cover" />
               </div>
               <div className="p-6">
-                <div className="font-semibold">Cuidados com a Pele</div>
-                <div className="text-sm text-gray-600">Beleza e bem-estar</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Cuidados com a Pele</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Beleza e bem-estar</div>
               </div>
             </div>
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
               <div className="relative h-40">
                 <Image src={banner1} alt="Destaque 3" fill className="object-cover" />
               </div>
               <div className="p-6">
-                <div className="font-semibold">Entrega Rápida</div>
-                <div className="text-sm text-gray-600">Receba no mesmo dia</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Entrega Rápida</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Receba no mesmo dia</div>
               </div>
             </div>
           </div>
@@ -236,8 +236,8 @@ function HomePage() {
         <section className="pt-2 pb-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Produtos em Destaque</h2>
-              <button className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold transition">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Produtos em Destaque</h2>
+              <button className="flex items-center gap-1 text-pharmacy-600 hover:text-pharmacy-700 dark:text-pharmacy-400 dark:hover:text-pharmacy-300 font-semibold transition">
                 Ver todos
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
@@ -278,15 +278,15 @@ function HomePage() {
 
         {/* Sobre Nós Section */}
         {/* Sobre Nós Section */}
-        <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50 py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-grid-blue-500/[0.05] bg-[size:20px_20px]"></div>
+        <section className="relative bg-gradient-to-br from-pharmacy-50 via-white to-pharmacy-50 dark:from-pharmacy-900/20 dark:via-gray-900 dark:to-pharmacy-900/20 py-24 overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pharmacy-500/[0.05] bg-[size:20px_20px]"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-blue-600 font-semibold tracking-wider uppercase mb-4 block">Conheça a NETFARMA</span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              <span className="text-pharmacy-600 dark:text-pharmacy-400 font-semibold tracking-wider uppercase mb-4 block">Conheça a NETFARMA</span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-pharmacy-600 to-pharmacy-800 dark:from-pharmacy-400 dark:to-pharmacy-600 bg-clip-text text-transparent">
                 Sobre Nós
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-600 dark:text-gray-300">
                 Sua parceira em saúde e bem-estar, fornecendo soluções inovadoras e atendimento de excelência
               </p>
             </div>
@@ -456,31 +456,31 @@ function HomePage() {
 
       </main>
 
-      <footer className="bg-gray-900 text-gray-300">
+      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 dark:text-gray-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-4 gap-8">
           <div>
-            <div className="font-bold text-white text-lg">NETFARMA</div>
+            <div className="font-bold text-white dark:text-gray-100 text-lg">NETFARMA</div>
             <p className="mt-2 text-sm">Sua saúde, nossa prioridade.</p>
           </div>
           <div>
-            <div className="font-semibold text-white">Quem Somos</div>
+            <div className="font-semibold text-white dark:text-gray-100">Quem Somos</div>
             <p className="mt-2 text-sm">Empresa dedicada à entrega de medicamentos com segurança e agilidade.</p>
           </div>
           <div>
-            <div className="font-semibold text-white">Contactos</div>
+            <div className="font-semibold text-white dark:text-gray-100">Contactos</div>
             <p className="mt-2 text-sm">Email: suporte@netfarma.com</p>
             <p className="text-sm">Parcerias: parceiros@netfarma.com</p>
           </div>
           <div>
-            <div className="font-semibold text-white">Links</div>
+            <div className="font-semibold text-white dark:text-gray-100">Links</div>
             <ul className="mt-2 space-y-2 text-sm">
-              <li><Link href="/support" className="hover:text-white">Suporte</Link></li>
-              <li><Link href="/about" className="hover:text-white">Quem Somos</Link></li>
-              <li><Link href="/auth/login" className="hover:text-white">Entrar</Link></li>
+              <li><Link href="/support" className="hover:text-pharmacy-400 dark:hover:text-pharmacy-300 transition-colors">Suporte</Link></li>
+              <li><Link href="/about" className="hover:text-pharmacy-400 dark:hover:text-pharmacy-300 transition-colors">Quem Somos</Link></li>
+              <li><Link href="/auth/login" className="hover:text-pharmacy-400 dark:hover:text-pharmacy-300 transition-colors">Entrar</Link></li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-white/10 py-4 text-center text-xs">© {new Date().getFullYear()} NETFARMA</div>
+        <div className="border-t border-white/10 dark:border-gray-800 py-4 text-center text-xs">© {new Date().getFullYear()} NETFARMA</div>
       </footer>
     </div>
   );

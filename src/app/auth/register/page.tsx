@@ -96,19 +96,19 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-pharmacy-50 to-pharmacy-100 dark:from-pharmacy-900/20 dark:to-pharmacy-800/20 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg bg-white dark:bg-gray-800">
             <CardContent className="pt-6">
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-pharmacy-600 rounded-full mb-4">
                   <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Conta Criada!</h2>
-                <p className="text-gray-600 mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Conta Criada!</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Sua conta foi criada com sucesso. Redirecionando...
                 </p>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pharmacy-600 mx-auto"></div>
               </div>
             </CardContent>
           </Card>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pharmacy-50 to-pharmacy-100 dark:from-pharmacy-900/20 dark:to-pharmacy-800/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mt-1">
@@ -129,10 +129,10 @@ export default function RegisterPage() {
 
         </div>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-white dark:bg-gray-800">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Criar Conta</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-gray-900 dark:text-gray-100">Criar Conta</CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Preencha os dados para criar sua conta
             </CardDescription>
           </CardHeader>
@@ -146,12 +146,12 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo</Label>
+                <Label htmlFor="name" className="text-gray-900 dark:text-gray-100">Nome Completo</Label>
                 <Input
                   id="name"
                   placeholder="Seu nome completo"
                   {...register('name')}
-                  className={errors.name ? 'border-red-500' : ''}
+                  className={`${errors.name ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.name && (
                   <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -160,13 +160,13 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="birthDate">Data de Naascimento</Label>
+                  <Label htmlFor="birthDate" className="text-gray-900 dark:text-gray-100">Data de Nascimento</Label>
                   <Input
                     id="birthDate"
                     placeholder="Seu nome completo"
                     type="date"
                     {...register('birthDate')}
-                    className={errors.birthDate ? 'border-red-500' : ''}
+                    className={`${errors.birthDate ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                   />
                   {errors.birthDate && (
                     <p className="text-sm text-red-500">{errors.birthDate.message}</p>
@@ -174,11 +174,11 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sex">Sexo</Label>
+                  <Label htmlFor="sex" className="text-gray-900 dark:text-gray-100">Sexo</Label>
                   <select
                     id="sex"
                     {...register('sex')}
-                    className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.sex ? 'border-red-500' : ''}`}
+                    className={`flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pharmacy-500 focus-visible:ring-offset-2 ${errors.sex ? 'border-red-500' : ''}`}
                   >
                     <option value="">Selecione</option>
                     <option value="M">Masculino</option>
@@ -192,12 +192,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
+                <Label htmlFor="address" className="text-gray-900 dark:text-gray-100">Endereço</Label>
                 <Input
                   id="address"
                   placeholder="Rua, número, bairro, cidade"
                   {...register('address')}
-                  className={errors.address ? 'border-red-500' : ''}
+                  className={`${errors.address ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.address && (
                   <p className="text-sm text-red-500">{errors.address.message}</p>
@@ -205,12 +205,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
+                <Label htmlFor="phone" className="text-gray-900 dark:text-gray-100">Telefone</Label>
                 <Input
                   id="phone"
                   placeholder="912345678"
                   {...register('phone')}
-                  className={errors.phone ? 'border-red-500' : ''}
+                  className={`${errors.phone ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.phone && (
                   <p className="text-sm text-red-500">{errors.phone.message}</p>
@@ -218,13 +218,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-900 dark:text-gray-100">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
                   {...register('email')}
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={`${errors.email ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -232,13 +232,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className="text-gray-900 dark:text-gray-100">Senha</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   {...register('password')}
-                  className={errors.password ? 'border-red-500' : ''}
+                  className={`${errors.password ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password.message}</p>
@@ -246,13 +246,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-900 dark:text-gray-100">Confirmar Senha</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
                   {...register('confirmPassword')}
-                  className={errors.confirmPassword ? 'border-red-500' : ''}
+                  className={`${errors.confirmPassword ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
@@ -261,7 +261,7 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? 'Criando conta...' : 'Criar Conta'}
@@ -269,9 +269,9 @@ export default function RegisterPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Já tem uma conta?{' '}
-                <Link href="/auth/login" className="text-blue-600 hover:underline">
+                <Link href="/auth/login" className="text-pharmacy-600 hover:text-pharmacy-700 dark:text-pharmacy-400 dark:hover:text-pharmacy-300 hover:underline">
                   Fazer login
                 </Link>
               </p>

@@ -111,7 +111,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center">
@@ -123,10 +123,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="shadow-lg bg-white">
+        <Card className="shadow-lg bg-white dark:bg-gray-800">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Entrar</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-gray-900 dark:text-gray-100">Entrar</CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Acesse sua conta para continuar
             </CardDescription>
           </CardHeader>
@@ -140,13 +140,13 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-900 dark:text-gray-100">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
                   {...register('email')}
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={`${errors.email ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -154,13 +154,13 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className="text-gray-900 dark:text-gray-100">Senha</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   {...register('password')}
-                  className={errors.password ? 'border-red-500' : ''}
+                  className={`${errors.password ? 'border-red-500' : ''} bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100`}
                 />
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password.message}</p>
@@ -169,7 +169,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? 'Entrando...' : 'Entrar'}
@@ -177,9 +177,9 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Não tem uma conta?{' '}
-                <Link href="/auth/register" className="text-blue-600 hover:underline">
+                <Link href="/auth/register" className="text-pharmacy-600 hover:text-pharmacy-700 dark:text-pharmacy-400 dark:hover:text-pharmacy-300 hover:underline">
                   Criar conta
                 </Link>
               </p>

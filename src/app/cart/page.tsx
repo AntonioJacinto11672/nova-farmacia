@@ -13,11 +13,12 @@ import OrderDetailService from '@/api/services/orderDetail.service'
 import OrderService from '@/api/services/order.service'
 import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
+import OrderItemService from '@/api/services/orderItem.service'
 
 export default function Cart() {
-  const { 
-    cartProducts, 
-    cartTotalQty, 
+  const {
+    cartProducts,
+    cartTotalQty,
     cartTotalAmount,
     handleRemoveProductFromCart,
     handleCartQtyIncrease,
@@ -74,7 +75,7 @@ export default function Cart() {
       const distanceKm = 8.5 // Simulado
       const fee = distanceKm * 150
       const timeMinutes = distanceKm * 4
-      
+
       setDeliveryFee(fee)
       setEstimatedTime(timeMinutes)
     }
@@ -110,7 +111,7 @@ export default function Cart() {
 
     try {
       const userData = JSON.parse(localStorage.getItem('user') || '{}')
-      
+
       if (!userData.id) {
         toast.error('Usuário não encontrado. Faça login novamente.')
         setIsProcessing(false)
@@ -119,9 +120,9 @@ export default function Cart() {
 
       // 1. Criar o pedido (passando userId)
       const orderResponse = await new OrderService().createOrder(userData.id)
-      
+
       console.log('Order Response:', orderResponse)
-      
+
       if (orderResponse.error || !orderResponse.data) {
         toast.error(orderResponse.error?.message || 'Erro ao criar pedido')
         setIsProcessing(false)
@@ -139,38 +140,55 @@ export default function Cart() {
         }))
 
         const calculateResponse = await new OrderDetailService().culculate(calculateRequest)
-        
+
         console.log('Calculate Response:', calculateResponse)
 
-          if (!calculateResponse.error && calculateResponse.data) {
+        if (!calculateResponse.error && calculateResponse.data) {
           const calculatedData = calculateResponse.data.data
-          
+
           // 3. Registrar detalhes do pedido
           const orderDetailRequest = {
             orderId: orderId,
             taxAmount: calculatedData.taxAmount, // Taxa de imposto
             imposedId: calculatedData.imposedId, // ID do imposto
             expenseId: calculatedData.expenseId, // ID da taxa
-            amountPaid: calculatedData.amountPaid + deliveryFee, // Total pago (subtotal + taxa + entrega)
-            deliveryAmount: deliveryFee // Taxa de entrega
+            amountPaid: calculatedData.amountPaid, // Total pago (subtotal + taxa + entrega)
+            deliveryAmount: calculatedData.deliveryAmount // Taxa de entrega
           }
 
           console.log('Order Detail Request:', orderDetailRequest)
 
           const orderDetailResponse = await new OrderDetailService().registerOrder(orderDetailRequest)
-          
+
           console.log('Order Detail Response:', orderDetailResponse)
+          console.log('Order Calculate:', calculatedData)
 
           if (orderDetailResponse.error) {
             toast.error('Erro ao registrar detalhes do pedido')
             console.error(orderDetailResponse.error)
           } else {
+
+            // Registrar os itens do pedido
+            
+            if (Array.isArray(calculatedData.orderItems)) {
+              await Promise.all(calculatedData.orderItems.map(async (e: any) => {
+                const resultCreateOrderItem = await new OrderItemService().createOrderItem(e.quantity, e.medicineId, orderId);
+
+                console.log("OS dados de resultCreateOrderItem", resultCreateOrderItem)
+                if (resultCreateOrderItem.data) {
+                  console.log(`Item do pedido ${e.medicineId} registrado com sucesso.`);
+                }
+                else {
+                  console.log("Erro ao cadastrar Order item", resultCreateOrderItem.error)
+                }
+              }));
+            }
             // Limpar carrinho
             handleClearCart()
             toast.success('Pedido criado com sucesso!')
-            
+
             // Redirecionar para página de rastreamento
-            window.location.href = `/tracking/${orderId}`
+            //window.location.href = `/tracking/${orderId}`
           }
         } else {
           toast.error('Erro ao calcular valores do pedido')
@@ -197,13 +215,13 @@ export default function Cart() {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-20">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-20">
           <div className="text-center">
-            <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Seu carrinho está vazio</h2>
-            <p className="text-gray-600 mb-6">Adicione produtos ao carrinho para continuar</p>
+            <ShoppingBag className="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Seu carrinho está vazio</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Adicione produtos ao carrinho para continuar</p>
             <Link href="/products">
-              <Button>
+              <Button className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Voltar para produtos
               </Button>
@@ -218,32 +236,32 @@ export default function Cart() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-            <Link href="/" className="hover:text-blue-600">Início</Link>
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <Link href="/" className="hover:text-pharmacy-600 dark:hover:text-pharmacy-400">Início</Link>
             <span>/</span>
-            <span className="text-gray-900">Carrinho</span>
+            <span className="text-gray-900 dark:text-gray-100">Carrinho</span>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Lista de produtos */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Meu Carrinho</h2>
-                
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Meu Carrinho</h2>
+
                 <div className="space-y-4">
                   {cartProducts.map((product) => (
-                    <div key={product.id} className="flex gap-4 p-4 border rounded-lg">
-                      <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag className="w-12 h-12 text-gray-400" />
+                    <div key={product.id} className="flex gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                      <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                       </div>
-                      
+
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-                        <p className="text-sm text-gray-600 mb-3">{product.description}</p>
-                        
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{product.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{product.description}</p>
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Button
@@ -264,9 +282,9 @@ export default function Cart() {
                               <Plus className="w-4 h-4" />
                             </Button>
                           </div>
-                          
+
                           <div className="flex items-center gap-4">
-                            <span className="font-bold text-gray-900">
+                            <span className="font-bold text-gray-900 dark:text-gray-100">
                               {formatPrice(product.price * product.quantity)}
                             </span>
                             <Button
@@ -291,7 +309,7 @@ export default function Cart() {
                         Adicionar mais produtos
                       </Button>
                     </Link>
-                    <Button onClick={handleContinueToDelivery} className="flex-1">
+                    <Button onClick={handleContinueToDelivery} className="flex-1 bg-pharmacy-600 hover:bg-pharmacy-700 text-white">
                       Continuar para entrega
                     </Button>
                   </div>
@@ -310,43 +328,43 @@ export default function Cart() {
                       <Input
                         id="fullName"
                         value={addressData.fullName}
-                        onChange={(e) => setAddressData({...addressData, fullName: e.target.value})}
+                        onChange={(e) => setAddressData({ ...addressData, fullName: e.target.value })}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="phone">Telefone *</Label>
                       <Input
                         id="phone"
                         value={addressData.phone}
-                        onChange={(e) => setAddressData({...addressData, phone: e.target.value})}
+                        onChange={(e) => setAddressData({ ...addressData, phone: e.target.value })}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="address">Endereço / Morada *</Label>
                       <Input
                         id="address"
                         value={addressData.address}
-                        onChange={(e) => setAddressData({...addressData, address: e.target.value})}
+                        onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="reference">Ponto de Referência</Label>
                       <Input
                         id="reference"
                         value={addressData.referencePoint}
-                        onChange={(e) => setAddressData({...addressData, referencePoint: e.target.value})}
+                        onChange={(e) => setAddressData({ ...addressData, referencePoint: e.target.value })}
                       />
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         id="useLocation"
                         checked={addressData.useCurrentLocation}
-                        onChange={(e) => setAddressData({...addressData, useCurrentLocation: e.target.checked})}
+                        onChange={(e) => setAddressData({ ...addressData, useCurrentLocation: e.target.checked })}
                       />
                       <Label htmlFor="useLocation">Usar localização atual</Label>
                     </div>
@@ -365,51 +383,51 @@ export default function Cart() {
 
             {/* Resumo do pedido */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Resumo do Pedido</h3>
-                
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Resumo do Pedido</h3>
+
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal ({cartTotalQty} itens)</span>
-                    <span className="font-medium">{formatPrice(cartTotalAmount)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Subtotal ({cartTotalQty} itens)</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{formatPrice(cartTotalAmount)}</span>
                   </div>
-                  
+
                   {showAddressForm && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Taxa de entrega</span>
                         <span className="font-medium">{deliveryFee > 0 ? formatPrice(deliveryFee) : 'Calculando...'}</span>
                       </div>
-                      
+
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Tempo estimado</span>
                         <span className="font-medium">{estimatedTime > 0 ? `${estimatedTime} min` : 'Calculando...'}</span>
                       </div>
                     </>
                   )}
-                  
-                  <div className="border-t pt-3 flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-green-600">
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between text-lg font-bold">
+                    <span className="text-gray-900 dark:text-gray-100">Total</span>
+                    <span className="text-pharmacy-600 dark:text-pharmacy-400">
                       {formatPrice(cartTotalAmount + deliveryFee)}
                     </span>
                   </div>
                 </div>
 
                 {showAddressForm ? (
-                  <Button 
+                  <Button
                     onClick={handleSubmitOrder}
                     disabled={isProcessing}
-                    className="w-full"
+                    className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
                     size="lg"
                   >
                     {isProcessing ? 'Processando...' : 'Confirmar Pedido'}
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     onClick={handleContinueToDelivery}
                     disabled={!cartProducts || cartProducts.length === 0}
-                    className="w-full"
+                    className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
                     size="lg"
                   >
                     Continuar para entrega
