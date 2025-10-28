@@ -114,7 +114,7 @@ export default function Cart() {
         if (addressResponse.data && addressResponse.data.data) {
           setExistingAddress(addressResponse.data.data)
           // Preencher formulário com dados existentes
-          setAddressData({
+       /*    setAddressData({
             fullName: addressResponse.data.data.fullName || '',
             phone: addressResponse.data.data.phone || '',
             address: `${addressResponse.data.data.street}, ${addressResponse.data.data.number}`,
@@ -122,7 +122,7 @@ export default function Cart() {
             useCurrentLocation: false,
             latitude: addressResponse.data.data.latitude || 0,
             longitude: addressResponse.data.data.longitude || 0
-          })
+          }) */
         }
       } catch (error) {
         console.log('Erro ao carregar endereço:', error)
