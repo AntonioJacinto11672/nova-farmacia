@@ -1,93 +1,298 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ShoppingBag, Package, Truck, CheckCircle, Clock, XCircle, Eye } from 'lucide-react'
-import OrderService from '@/api/services/order.service'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Eye, FileText, Download } from 'lucide-react'
+import OrderService from '@/api/services/order.service'
+import OrderDetailService from '@/api/services/orderDetail.service'
+import OrderItemService from '@/api/services/orderItem.service'
 import toast from 'react-hot-toast'
 
 interface Order {
   id: string
-  status: {
-    id: string
-    type: string
-    description: string
+  userId: string
+  status: string
+  createdAt: string
+  orderDetails?: {
+    taxAmount: number
+    amountPaid: number
+    deliveryAmount: number
   }
-  user: any
+  orderItems?: Array<{
+    id: string
+    quantity: number
+    medicine: {
+      id: string
+      name: string
+      price: number
+    }
+  }>
+}
+
+interface OrderDetailsModalProps {
+  isOpen: boolean
+  onClose: () => void
+  order: Order | null
+}
+
+function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
+  if (!isOpen || !order) return null
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-AO', {
+      style: 'currency',
+      currency: 'AOA'
+    }).format(price)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+      case 'processing':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
+      case 'shipped':
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400'
+      case 'delivered':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-2xl bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-gray-900 dark:text-gray-100">Detalhes do Pedido</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            ×
+          </Button>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          {/* Informações do pedido */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Número do Pedido</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">#{order.id}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Status</h4>
+              <Badge className={getStatusColor(order.status)}>
+                {order.status}
+              </Badge>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Data</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {new Date(order.createdAt).toLocaleDateString('pt-AO')}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Total</h4>
+              <p className="text-sm font-bold text-pharmacy-600 dark:text-pharmacy-400">
+                {formatPrice(order.orderDetails?.amountPaid || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Itens do pedido */}
+          <div>
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Medicamentos</h4>
+            <div className="space-y-3">
+              {order.orderItems?.map((item) => (
+                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div>
+                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{item.medicine.name}</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Quantidade: {item.quantity}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      {formatPrice(item.medicine.price * item.quantity)}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {formatPrice(item.medicine.price)} cada
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Resumo financeiro */}
+          {order.orderDetails && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Resumo Financeiro</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {formatPrice((order.orderDetails.amountPaid || 0) - (order.orderDetails.deliveryAmount || 0) - (order.orderDetails.taxAmount || 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Taxa de entrega:</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {formatPrice(order.orderDetails.deliveryAmount || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Impostos:</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {formatPrice(order.orderDetails.taxAmount || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <span className="text-gray-900 dark:text-gray-100">Total:</span>
+                  <span className="text-pharmacy-600 dark:text-pharmacy-400">
+                    {formatPrice(order.orderDetails.amountPaid || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Ações */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={() => {
+                // Implementar geração de fatura
+                toast.success('Fatura gerada com sucesso!')
+              }}
+              className="flex-1 bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Gerar Fatura
+            </Button>
+            <Button
+              onClick={() => {
+                // Implementar download da fatura
+                toast.success('Fatura baixada!')
+              }}
+              variant="outline"
+              className="flex-1"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Baixar Fatura
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-    // Verificar autenticação
-    const userData = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
-    
-    if (!userData || !token) {
-      window.location.href = '/auth/login'
+    const user = localStorage.getItem('user')
+    if (!user) {
+      router.push('/auth/login')
       return
     }
 
-    fetchUserOrders()
-  }, [])
+    loadOrders()
+  }, [router])
 
-  const fetchUserOrders = async () => {
+  const loadOrders = async () => {
     try {
-      setLoading(true)
-      const userData = localStorage.getItem('user')
-      const user = JSON.parse(userData || '{}')
+      const userData = JSON.parse(localStorage.getItem('user') || '{}')
       const orderService = new OrderService()
+      const orderDetailService = new OrderDetailService()
+      const orderItemService = new OrderItemService()
+
+      // Buscar pedidos do usuário
+      const ordersResponse = await orderService.getOrdersByUserId(userData.id)
       
-      const response = await orderService.getOrderByUserId(user.id, 20, 1)
-      
-      if (response.data?.data) {
-        setOrders(response.data.data)
-      } else {
-        console.error('Erro ao buscar pedidos:', response.error)
-        toast.error('Erro ao carregar pedidos')
+      if (ordersResponse.data && ordersResponse.data.data) {
+        const ordersData = ordersResponse.data.data
+        
+        // Para cada pedido, buscar detalhes e itens
+        const ordersWithDetails = await Promise.all(
+          ordersData.map(async (order: any) => {
+            try {
+              // Buscar detalhes do pedido
+              const detailsResponse = await orderDetailService.getOrderDetailsByOrderId(order.id)
+              
+              // Buscar itens do pedido
+              const itemsResponse = await orderItemService.getOrderItemsByOrderId(order.id)
+              
+              return {
+                ...order,
+                orderDetails: detailsResponse.data?.data || null,
+                orderItems: itemsResponse.data?.data || []
+              }
+            } catch (error) {
+              console.log('Erro ao carregar detalhes do pedido:', error)
+              return order
+            }
+          })
+        )
+        
+        setOrders(ordersWithDetails)
       }
     } catch (error) {
-      console.error('Erro ao buscar pedidos:', error)
+      console.log('Erro ao carregar pedidos:', error)
       toast.error('Erro ao carregar pedidos')
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusIcon = (statusType: string) => {
-    const status = statusType.toLowerCase()
-    if (status.includes('pendente') || status.includes('pending')) return <Clock className="w-5 h-5" />
-    if (status.includes('processando') || status.includes('processing')) return <Package className="w-5 h-5" />
-    if (status.includes('enviado') || status.includes('shipped')) return <Truck className="w-5 h-5" />
-    if (status.includes('entregue') || status.includes('delivered')) return <CheckCircle className="w-5 h-5" />
-    if (status.includes('cancelado') || status.includes('cancelled')) return <XCircle className="w-5 h-5" />
-    return <Clock className="w-5 h-5" />
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-AO', {
+      style: 'currency',
+      currency: 'AOA'
+    }).format(price)
   }
 
-  const getStatusColor = (statusType: string) => {
-    const status = statusType.toLowerCase()
-    if (status.includes('pendente') || status.includes('pending')) return 'bg-yellow-100 text-yellow-800'
-    if (status.includes('processando') || status.includes('processing')) return 'bg-blue-100 text-blue-800'
-    if (status.includes('enviado') || status.includes('shipped')) return 'bg-purple-100 text-purple-800'
-    if (status.includes('entregue') || status.includes('delivered')) return 'bg-green-100 text-green-800'
-    if (status.includes('cancelado') || status.includes('cancelled')) return 'bg-red-100 text-red-800'
-    return 'bg-gray-100 text-gray-800'
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+      case 'processing':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
+      case 'shipped':
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400'
+      case 'delivered':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+    }
   }
 
   if (loading) {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-20">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando pedidos...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pharmacy-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Carregando pedidos...</p>
           </div>
         </div>
         <Footer />
@@ -98,52 +303,94 @@ export default function OrdersPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Meus Pedidos</h1>
-            <p className="text-gray-600">Acompanhe o status dos seus pedidos de medicamentos</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Meus Pedidos</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Acompanhe o status dos seus pedidos e gere faturas
+            </p>
           </div>
 
           {orders.length === 0 ? (
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum pedido encontrado</h3>
-                  <p className="text-gray-600 mb-6">Você ainda não fez nenhum pedido</p>
-                  <Link href="/products">
-                    <Button>Ver Produtos</Button>
-                  </Link>
-                </div>
+            <Card className="bg-white dark:bg-gray-800">
+              <CardContent className="text-center py-12">
+                <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Nenhum pedido encontrado
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Você ainda não fez nenhum pedido. Que tal começar a comprar?
+                </p>
+                <Button
+                  onClick={() => router.push('/products')}
+                  className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+                >
+                  Ver Produtos
+                </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-6">
               {orders.map((order) => (
-                <Card key={order.id} className="hover:shadow-md transition-shadow">
+                <Card key={order.id} className="bg-white dark:bg-gray-800">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Pedido #{order.id.substring(0, 8).toUpperCase()}
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            Pedido #{order.id}
                           </h3>
-{/*                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status.type)}`}>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(order.status.type)}
-                              <span>{order.status.description}</span>
-                            </div>
-                          </span> */}
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Data:</span>
+                            <p className="text-gray-900 dark:text-gray-100">
+                              {new Date(order.createdAt).toLocaleDateString('pt-AO')}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Total:</span>
+                            <p className="font-semibold text-pharmacy-600 dark:text-pharmacy-400">
+                              {formatPrice(order.orderDetails?.amountPaid || 0)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">Itens:</span>
+                            <p className="text-gray-900 dark:text-gray-100">
+                              {order.orderItems?.length || 0} medicamento(s)
+                            </p>
+                          </div>
                         </div>
                       </div>
                       
-                      <Link href={`/tracking/${order.id}`}>
-                        <Button variant="outline" size="sm">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            setSelectedOrder(order)
+                            setShowDetailsModal(true)
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
                           <Eye className="w-4 h-4 mr-2" />
-                          Ver detalhes
+                          Ver Detalhes
                         </Button>
-                      </Link>
+                        <Button
+                          onClick={() => {
+                            toast.success('Fatura gerada com sucesso!')
+                          }}
+                          size="sm"
+                          className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Fatura
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -153,7 +400,12 @@ export default function OrdersPage() {
         </div>
       </div>
       <Footer />
+
+      <OrderDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        order={selectedOrder}
+      />
     </>
   )
 }
-

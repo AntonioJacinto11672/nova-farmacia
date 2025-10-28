@@ -14,6 +14,7 @@ import OrderService from '@/api/services/order.service'
 import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
 import OrderItemService from '@/api/services/orderItem.service'
+import AddressService from '@/api/services/address.service'
 
 export default function Cart() {
   const {
@@ -30,6 +31,10 @@ export default function Cart() {
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [estimatedTime, setEstimatedTime] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
+  const [existingAddress, setExistingAddress] = useState<any>(null)
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false)
 
   // Formulário de endereço
   const [addressData, setAddressData] = useState({
@@ -89,7 +94,7 @@ export default function Cart() {
     }
   }
 
-  const handleContinueToDelivery = () => {
+  const handleContinueToDelivery = async () => {
     if (cartProducts && cartProducts.length > 0) {
       // Verificar se há usuário logado
       const user = localStorage.getItem('user')
@@ -97,6 +102,34 @@ export default function Cart() {
         toast.error('Por favor, faça login para continuar')
         return
       }
+
+      const userData = JSON.parse(user)
+      setIsLoadingAddress(true)
+
+      try {
+        // Verificar se já existe endereço
+        const addressService = new AddressService()
+        const addressResponse = await addressService.getAddressByUserId(userData.id)
+        
+        if (addressResponse.data && addressResponse.data.data) {
+          setExistingAddress(addressResponse.data.data)
+          // Preencher formulário com dados existentes
+          setAddressData({
+            fullName: addressResponse.data.data.fullName || '',
+            phone: addressResponse.data.data.phone || '',
+            address: `${addressResponse.data.data.street}, ${addressResponse.data.data.number}`,
+            referencePoint: addressResponse.data.data.complement || '',
+            useCurrentLocation: false,
+            latitude: addressResponse.data.data.latitude || 0,
+            longitude: addressResponse.data.data.longitude || 0
+          })
+        }
+      } catch (error) {
+        console.log('Erro ao carregar endereço:', error)
+      } finally {
+        setIsLoadingAddress(false)
+      }
+
       setShowAddressForm(true)
     }
   }
@@ -104,6 +137,11 @@ export default function Cart() {
   const handleSubmitOrder = async () => {
     if (!addressData.fullName || !addressData.address || !addressData.phone) {
       toast.error('Por favor, preencha todos os campos obrigatórios')
+      return
+    }
+
+    if (!selectedPaymentMethod) {
+      toast.error('Por favor, selecione um método de pagamento')
       return
     }
 
@@ -116,6 +154,36 @@ export default function Cart() {
         toast.error('Usuário não encontrado. Faça login novamente.')
         setIsProcessing(false)
         return
+      }
+
+      // Salvar/atualizar endereço
+      try {
+        const addressService = new AddressService()
+        const addressParts = addressData.address.split(',')
+        const street = addressParts[0]?.trim() || ''
+        const number = addressParts[1]?.trim() || ''
+
+        if (existingAddress) {
+          // Atualizar endereço existente (implementar se necessário)
+          console.log('Atualizando endereço existente')
+        } else {
+          // Criar novo endereço
+          await addressService.createAddress(
+            'Angola', // country
+            'Luanda', // state
+            'Luanda', // city
+            'Centro', // neighborhood
+            street,
+            number,
+            addressData.referencePoint, // complement
+            addressData.latitude,
+            addressData.longitude,
+            userData.id
+          )
+        }
+      } catch (addressError) {
+        console.log('Erro ao salvar endereço:', addressError)
+        // Continuar mesmo com erro no endereço
       }
 
       // 1. Criar o pedido (passando userId)
@@ -318,9 +386,16 @@ export default function Cart() {
 
               {/* Formulário de endereço */}
               {showAddressForm && (
-                <Card className="mt-6">
+                <Card className="mt-6 bg-white dark:bg-gray-800">
                   <CardHeader>
-                    <CardTitle>Informações de Entrega</CardTitle>
+                    <CardTitle className="text-gray-900 dark:text-gray-100">Informações de Entrega</CardTitle>
+                    {existingAddress && (
+                      <div className="bg-pharmacy-50 dark:bg-pharmacy-900/20 p-3 rounded-lg">
+                        <p className="text-sm text-pharmacy-700 dark:text-pharmacy-300">
+                          ✓ Endereço carregado dos seus dados salvos
+                        </p>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -370,12 +445,115 @@ export default function Cart() {
                     </div>
 
                     {addressData.useCurrentLocation && (addressData.latitude !== 0) && (
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="text-sm text-blue-800">
+                      <div className="bg-pharmacy-50 dark:bg-pharmacy-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-pharmacy-700 dark:text-pharmacy-300">
                           ✓ Localização obtida: {addressData.latitude.toFixed(4)}, {addressData.longitude.toFixed(4)}
                         </p>
                       </div>
                     )}
+
+                    {/* Botão para continuar para pagamento */}
+                    <div className="pt-4">
+                      <Button
+                        onClick={() => setShowPaymentForm(true)}
+                        className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+                        disabled={!addressData.fullName || !addressData.address || !addressData.phone}
+                      >
+                        Continuar para Pagamento
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Formulário de Pagamento */}
+              {showPaymentForm && (
+                <Card className="mt-6 bg-white dark:bg-gray-800">
+                  <CardHeader>
+                    <CardTitle className="text-gray-900 dark:text-gray-100">Método de Pagamento</CardTitle>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      O pagamento será processado após a confirmação do pedido
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div 
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          selectedPaymentMethod === 'multicaixa-express' 
+                            ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20' 
+                            : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                        }`}
+                        onClick={() => setSelectedPaymentMethod('multicaixa-express')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${
+                            selectedPaymentMethod === 'multicaixa-express' 
+                              ? 'border-pharmacy-600 bg-pharmacy-600' 
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}>
+                            {selectedPaymentMethod === 'multicaixa-express' && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Multicaixa Express</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento instantâneo via Multicaixa</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div 
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          selectedPaymentMethod === 'multicaixa' 
+                            ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20' 
+                            : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                        }`}
+                        onClick={() => setSelectedPaymentMethod('multicaixa')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${
+                            selectedPaymentMethod === 'multicaixa' 
+                              ? 'border-pharmacy-600 bg-pharmacy-600' 
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}>
+                            {selectedPaymentMethod === 'multicaixa' && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Multicaixa</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Disponível em breve</p>
+                            <span className="text-xs text-orange-600 dark:text-orange-400">Em desenvolvimento</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Informações Importantes</h4>
+                      <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <li>• O pagamento será processado após a confirmação do pedido</li>
+                        <li>• Você receberá uma fatura por email</li>
+                        <li>• Pode solicitar uma fatura adicional a qualquer momento</li>
+                      </ul>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        onClick={() => setShowPaymentForm(false)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Voltar
+                      </Button>
+                      <Button
+                        onClick={handleSubmitOrder}
+                        disabled={!selectedPaymentMethod || isProcessing}
+                        className="flex-1 bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+                      >
+                        {isProcessing ? 'Processando...' : 'Confirmar Pedido'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}

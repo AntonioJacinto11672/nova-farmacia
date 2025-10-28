@@ -27,8 +27,12 @@ type CartContextType = {
     handleCartQtyDecrease: (product: CartProductType) => void;
     handleClearCart: () => void,
     paymentIntent: string | null,
-    handleSetPaymentIntent: (val: string | null) => void
-
+    handleSetPaymentIntent: (val: string | null) => void,
+    showAddToCartModal: boolean,
+    setShowAddToCartModal: (show: boolean) => void,
+    modalProduct: CartProductType | null,
+    setModalProduct: (product: CartProductType | null) => void,
+    confirmAddToCart: () => void
 }
 
 
@@ -45,6 +49,8 @@ export const CartContextProvider = (props: Props) => {
     const [cartTotalAmount, setCartTotalAmount] = useState(0)
     const [cartProducts, setCartProducts] = useState<CartProductType[] | null>(null)
     const [paymentIntent, setPaymentIntent] = useState<string | null>(null)
+    const [showAddToCartModal, setShowAddToCartModal] = useState(false)
+    const [modalProduct, setModalProduct] = useState<CartProductType | null>(null)
 
 
 
@@ -82,45 +88,39 @@ export const CartContextProvider = (props: Props) => {
 
     const handleAddProductToCart = useCallback((product: CartProductType) => {
         console.log("Produto para adicionar ", product)
-        /* setCartProducts((prev) => {
-            let updatedCart;
-            
-            if (prev) {
-                updatedCart = [...prev, product]
-            } else {
-                updatedCart = [product]
-            }
-            console.log("Produtos adicionados ", updatedCart)
-            console.log('Produto adicionado ao carrinho')
-            toast.success('Produto adicionado ao carrinho')
-            localStorage.setItem("netFarmaCartItems", JSON.stringify(updatedCart))
-            localStorage.setItem("netFarmaCartItemsOrder", JSON.stringify(updatedCart))
-            return updatedCart
-        }) */
-
-        setCartProducts((prev) => {
-            let updatedCart;
-            if (prev) {
-                const existingIndex = prev.findIndex((item) => item.id === product.id)
-                if (existingIndex > -1) {
-                    updatedCart = [...prev]
-                    updatedCart[existingIndex].quantity += product.quantity
-                } else {
-                    updatedCart = [...prev, product]
-                }
-            } else {
-                updatedCart = [product]
-            }
-            console.log("Produtos adicionados ", updatedCart)
-
-            localStorage.setItem("netFarmaCartItems", JSON.stringify(updatedCart))
-            localStorage.setItem("netFarmaCartItemsOrder", JSON.stringify(updatedCart))
-
-            return updatedCart
-        }
-        )
-        toast.success('Produto adicionado ao carrinho')
+        
+        // Mostrar modal de confirmação
+        setModalProduct(product)
+        setShowAddToCartModal(true)
     }, [])
+
+    const confirmAddToCart = useCallback(() => {
+        if (modalProduct) {
+            setCartProducts((prev) => {
+                let updatedCart;
+                if (prev) {
+                    const existingIndex = prev.findIndex((item) => item.id === modalProduct.id)
+                    if (existingIndex > -1) {
+                        updatedCart = [...prev]
+                        updatedCart[existingIndex].quantity += modalProduct.quantity
+                    } else {
+                        updatedCart = [...prev, modalProduct]
+                    }
+                } else {
+                    updatedCart = [modalProduct]
+                }
+                console.log("Produtos adicionados ", updatedCart)
+
+                localStorage.setItem("netFarmaCartItems", JSON.stringify(updatedCart))
+                localStorage.setItem("netFarmaCartItemsOrder", JSON.stringify(updatedCart))
+
+                return updatedCart
+            })
+            toast.success('Produto adicionado ao carrinho')
+        }
+        setShowAddToCartModal(false)
+        setModalProduct(null)
+    }, [modalProduct])
 
     const handleRemoveProductFromCart = useCallback((product: CartProductType) => {
         if (cartProducts) {
@@ -198,7 +198,12 @@ export const CartContextProvider = (props: Props) => {
         handleCartQtyDecrease,
         handleClearCart,
         paymentIntent,
-        handleSetPaymentIntent
+        handleSetPaymentIntent,
+        showAddToCartModal,
+        setShowAddToCartModal,
+        modalProduct,
+        setModalProduct,
+        confirmAddToCart
     }
     return <CartContext.Provider value={value}  {...props} />
 }
