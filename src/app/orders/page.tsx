@@ -7,7 +7,8 @@ import Footer from '@/components/include/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, FileText, Download } from 'lucide-react'
+import { Eye, FileText, Download, Printer } from 'lucide-react'
+import Link from 'next/link'
 import OrderService from '@/api/services/order.service'
 import OrderDetailService from '@/api/services/orderDetail.service'
 import OrderItemService from '@/api/services/orderItem.service'
@@ -211,27 +212,27 @@ function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
 
           {/* Ações */}
           <div className="flex gap-3 pt-4">
-            <Button
-              onClick={() => {
-                // Implementar geração de fatura
-                toast.success('Fatura gerada com sucesso!')
-              }}
-              className="flex-1 bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Gerar Fatura
-            </Button>
-            <Button
-              onClick={() => {
-                // Implementar download da fatura
-                toast.success('Fatura baixada!')
-              }}
-              variant="outline"
-              className="flex-1"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Baixar Fatura
-            </Button>
+            <Link href={`/invoice/${order.id}`} className="flex-1">
+              <Button
+                className="w-full bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Gerar Fatura
+              </Button>
+            </Link>
+            <Link href={`/invoice/${order.id}`} className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.open(`/invoice/${order.id}`, '_blank')
+                }}
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir Fatura
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -400,16 +401,15 @@ export default function OrdersPage() {
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalhes
                         </Button>
-                        <Button
-                          onClick={() => {
-                            toast.success('Fatura gerada com sucesso!')
-                          }}
-                          size="sm"
-                          className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Fatura
-                        </Button>
+                        <Link href={`/invoice/${order.id}`}>
+                          <Button
+                            size="sm"
+                            className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Gerar Fatura
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </CardContent>
