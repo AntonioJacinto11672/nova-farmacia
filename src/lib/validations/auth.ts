@@ -23,5 +23,9 @@ export const registerSchema = z.object({
   path: ["confirmPassword"],
 })
 
+export const providerSchema = z.object({
+  provider: z.string("campo Obrigatório").min(2, "Senha deve ter pelo menos 2 caracteres")
+})
 export type LoginFormData = z.infer<typeof loginSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
+export type ProviderFormData = z.infer<typeof providerSchema>
