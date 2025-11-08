@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Users, Box, Package, Tag, BarChart2, Home, ChevronDown } from 'lucide-react'
 
 const MENU = [
-  { href: '/admin/', label: 'Dashboard', icon: Home },
+  { href: '/admin', label: 'Dashboard', icon: Home },
   { href: '/admin/users', label: 'Gerir Utilizadores', icon: Users },
   { href: '/admin/products', label: 'Gerir Produtos', icon: Box },
   { href: '/admin/orders', label: 'Gerir Pedidos', icon: Package },
@@ -29,6 +29,7 @@ export default function Sidebar() {
         {MENU.map((it) => {
           const Icon = it.icon
           const active = pathname === it.href || pathname.startsWith(it.href + '/')
+          console.log('Sidebar active:', it.href, pathname, active)
           return (
             <Link
               key={it.href}
