@@ -8,12 +8,16 @@ import DataTable, { TableHeader } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import CategoryService from '@/api/services/category.service'
+import { CategoryFormValues, categoryryFormSchema } from '@/lib/validations/category'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { truncateText } from '@/utils/TruncateText'
 
 // Minimal provider shape used in this page. Keep in sync with API schema.
 interface CategoryType {
   id: string
   name: string
-  descrption: string
+  description: string
   // optional field if API exposes activation state
   isActive?: boolean
 }
@@ -39,8 +43,20 @@ export default function CategoryPage() {
   // Modal / form state
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<CategoryType | null>(null)
-  const [nameInput, setNameInput] = useState('')
-  const [descriptionInput, setDescriptionInput] = useState('')
+
+  // react-hook-form + zod for the modal form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, touchedFields, isSubmitting },
+    reset,
+    setValue,
+  } = useForm<CategoryFormValues>({
+    resolver: zodResolver(categoryryFormSchema),
+    mode: 'onTouched',
+    defaultValues: { name: '', description: '' },
+  })
+
 
 
   // Search state (debounced)
@@ -53,6 +69,7 @@ export default function CategoryPage() {
       const responseCategory = new CategoryService()
       const resp = await responseCategory.getAllCategory(PAGE_SIZE, pageNumber)
       const data = (resp.data as any)?.data || []
+      
       setCategoryPageData(data)
       setTotalPages((resp.data as any)?.totalPages || 0)
       setTotalElements((resp.data as any)?.total || 0)
@@ -140,27 +157,21 @@ export default function CategoryPage() {
 
   function openCreate() {
     setEditing(null)
-    setNameInput('')
-    setDescriptionInput('')
     setShowModal(true)
   }
 
   function openEdit(p: CategoryType) {
     setEditing(p)
-    setNameInput(p.name)
-    setDescriptionInput(p.name)
+
     setShowModal(true)
   }
 
-  async function submitCreateOrEdit() {
-    if (!nameInput.trim()) {
-      toast.error('Nome é obrigatório')
-      return
-    }
+  async function submitCreateOrEdit(data: CategoryFormValues) {
+
     setLoading(true)
     try {
       const responseCategory = new CategoryService()
-      await responseCategory.createCategory(nameInput.trim(), descriptionInput.trim())
+      await responseCategory.createCategory(data.name, data.description || '')
       toast.success('Categoria salvo')
       setShowModal(false)
       // reload server page
@@ -191,6 +202,7 @@ export default function CategoryPage() {
   const tableHeaders: TableHeader[] = [
     { key: 'index', label: '#', className: '' },
     { key: 'name', label: 'Nome', className: '' },
+    { key: 'description', label: 'Descrição', className: '' },
     { key: 'actions', label: 'Ações', className: '' },
   ]
 
@@ -213,6 +225,7 @@ export default function CategoryPage() {
           <tr key={provider.id}>
             <td className="py-2 px-4 border-b">{numberingBase + idx + 1}</td>
             <td className="py-2 px-4 border-b">{provider.name}</td>
+            <td className="py-2 px-4 border-b">{truncateText(provider.description)}</td>
             <td className="px-4 py-2 border-b">
               <div className="flex gap-2">
                 <button onClick={() => openEdit(provider)} title="Editar" className="p-2 rounded bg-blue-600 text-white">
@@ -241,20 +254,36 @@ export default function CategoryPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded shadow max-w-md w-full p-6">
             <h3 className="text-lg font-bold mb-4">{editing ? 'Editar Categoria' : 'Novo Categoria'}</h3>
-            <div className="space-y-3">
+            <form onSubmit={handleSubmit(submitCreateOrEdit)} className="space-y-4">
+              {/* Name input */}
               <div className="space-y-2">
-                <Label htmlFor="providerName" className="text-gray-900">Nome do Categoria</Label>
-                <Input id="providerName" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Nome do categoria" />
+                <Label htmlFor="name" className="text-gray-900">Nome do Categoria</Label>
+                <Input
+                  id="name"
+                  {...register('name')}
+                  className={`${errors.name ? 'border-red-500' : touchedFields.name ? 'border-green-500' : ''}`}
+                  placeholder="Nome do categoria"
+                />
+                {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
               </div>
+
+              {/* Description textarea */}
               <div className="space-y-2">
-                <Label htmlFor="providerName" className="text-gray-900">Descrição do Categoria</Label>
-                <Input id="providerName" value={descriptionInput} onChange={(e) => setDescriptionInput(e.target.value)} placeholder="Descrição do categoria" />
+                <Label htmlFor="description" className="text-gray-900">Descrição</Label>
+                <textarea
+                  id="description"
+                  {...register('description')}
+                  className={`w-full rounded border px-3 py-2 ${errors.description ? 'border-red-500' : touchedFields.description ? 'border-green-500' : 'border-gray-300'}`}
+                  placeholder="Descrição curta do categoria"
+                  rows={3}
+                />
+                {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
               </div>
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded border">Cancelar</button>
-              <button onClick={submitCreateOrEdit} className="px-4 py-2 rounded bg-blue-600 text-white">Salvar</button>
-            </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => { setShowModal(false); reset() }} className="px-4 py-2 rounded border">Cancelar</button>
+                <button type="submit" disabled={isSubmitting || loading} className="px-4 py-2 rounded bg-blue-600 text-white">{isSubmitting || loading ? 'Salvando...' : 'Salvar'}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -29,7 +29,7 @@ export default function Sidebar() {
         {MENU.map((it) => {
           const Icon = it.icon
           const active = pathname === it.href || pathname.startsWith(it.href + '/admin')
-          console.log('Sidebar active:', it.href, pathname, active)
+          //console.log('Sidebar active:', it.href, pathname, active)
           return (
             <Link
               key={it.href}
@@ -45,7 +45,7 @@ export default function Sidebar() {
         {/* Reports with submenu */}
         <div className="mt-3">
           <button
-            onClick={() => setReportsOpen((value) => value)}
+            onClick={() => setReportsOpen((value) => !value)}
             className={`w-full flex items-center justify-between px-3 py-2 rounded mb-1 text-sm ${reportsOpen || pathname.startsWith('/admin/reports') ? 'bg-gray-800 text-white font-medium' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}
           >
             <div className="flex items-center gap-3">
