@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { providerFormSchema, type ProviderFormValues } from '@/lib/validations/provider'
 
 // Minimal provider shape used in this page. Keep in sync with API schema.
-interface Provider {
+export interface ProviderTypeData {
   id: string
   name: string
   // optional field if API exposes activation state
@@ -30,8 +30,8 @@ const PAGE_SIZE = 10
  * - Continuous numbering across pages
  */
 export default function ProvidersPage() {
-  const [providersPageData, setProvidersPageData] = useState<Provider[]>([])
-  const [filteredProviders, setFilteredProviders] = useState<Provider[] | null>(null)
+  const [providersPageData, setProvidersPageData] = useState<ProviderTypeData[]>([])
+  const [filteredProviders, setFilteredProviders] = useState<ProviderTypeData[] | null>(null)
   const [page, setPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(0)
   const [totalElements, setTotalElements] = useState<number>(0)
@@ -39,7 +39,7 @@ export default function ProvidersPage() {
 
   // Modal / form state
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<Provider | null>(null)
+  const [editing, setEditing] = useState<ProviderTypeData | null>(null)
   const [nameInput, setNameInput] = useState('')
 
   
@@ -81,7 +81,7 @@ export default function ProvidersPage() {
   }
 
   // fetch all items for search (best-effort)
-  async function fetchAllForSearch(): Promise<Provider[]> {
+  async function fetchAllForSearch(): Promise<ProviderTypeData[]> {
     setLoading(true)
     try {
       const svc = new ProviderService()
@@ -114,7 +114,7 @@ export default function ProvidersPage() {
       ;(async () => {
         const all = await fetchAllForSearch()
         if (!mounted) return
-        const filtered = all.filter((p: Provider) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        const filtered = all.filter((p: ProviderTypeData) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
         setFilteredProviders(filtered)
         setPage(1)
         setTotalPages(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)))
@@ -157,7 +157,7 @@ export default function ProvidersPage() {
     setShowModal(true)
   }
 
-  function openEdit(p: Provider) {
+  function openEdit(p: ProviderTypeData) {
     setEditing(p)
     setNameInput(p.name)
     setShowModal(true)

@@ -1,3 +1,3 @@
-interface CreateResponse{
-    id:string
-  } 
+interface CreateResponse {
+  id: string
+} 

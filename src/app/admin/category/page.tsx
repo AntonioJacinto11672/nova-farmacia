@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { truncateText } from '@/utils/TruncateText'
 
 // Minimal provider shape used in this page. Keep in sync with API schema.
-interface CategoryType {
+export interface CategoryType {
   id: string
   name: string
   description: string
