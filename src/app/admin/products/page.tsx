@@ -1,14 +1,15 @@
 "use client"
 import React, { useEffect, useMemo, useState } from 'react'
-import ProviderService from '@/api/services/medicine.service'
+import ProviderService from '@/api/services/provider.service'
 import toast from 'react-hot-toast'
 import { Edit3, Trash2, Lock, Unlock, Plus, Info } from 'lucide-react'
 import SearchBar from '@/components/ui/SearchBar'
+import SearchableSelect from '@/components/ui/SearchableSelect'
 import DataTable, { TableHeader } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import MedicineService from '@/api/services/medicine.service'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { truncateText } from '@/utils/TruncateText'
 import { medicineFormSchema, MedicineFormValues } from '@/lib/validations/medicine'
@@ -75,6 +76,7 @@ export default function MedicinePage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, touchedFields, isSubmitting },
     reset,
     setValue,
@@ -195,7 +197,7 @@ export default function MedicinePage() {
 
       if (data.price <= 0) { return toast.error("Preço Inferior aao solitado 1 kz") }
 
-      console.log("Data to submit: ", data);
+    
       if (!data.providerId) {
         return toast.error("Escolha um fornecedor")
 
@@ -215,15 +217,22 @@ export default function MedicinePage() {
 
       const result = await responseMedicine.createMedicine(data.name, data.quantity, data.price, data.description, data.providerId)
 
-      console.log("Result do produto: ", result);
+    
+
+
       if (result.data) {
         const categoryIdValue: string[] = Array.isArray(data.categoryId)
           ? data.categoryId.map((v: any) => String(v))
           : []
-        const resdataCategory = await responseMedicine.createMedicineCategory(result.data.data.id, categoryIdValue)
 
+        
+
+        const resdataCategory = await responseMedicine.createMedicineCategory(result.data?.data.id, categoryIdValue)
+        
         if (resdataCategory.data) {
           toast.success("Producto cadastrado com sucesso!")
+          // clear the form after a successful create
+          reset()
           router.refresh()
           router.back()
         }
@@ -283,7 +292,7 @@ export default function MedicinePage() {
     setLoading(true)
     try {
       const providerResponse = new ProviderService()
-      const resp = await providerResponse.getAllMediciine()
+      const resp = await providerResponse.getAllProvider()
       const data = (resp.data as any)?.data || []
       setProviderMedicine(data)
     } catch (err) {
@@ -424,23 +433,37 @@ export default function MedicinePage() {
               {/* Select for providerId */}
               <div className="space-y-2">
                 <Label htmlFor="providerId" className="text-gray-900">Fornecedor do Produco</Label>
-                <select id="providerId" {...register('providerId')} className={`w-full rounded border px-3 py-2 ${errors.providerId ? 'border-red-500' : touchedFields.providerId ? 'border-green-500' : 'border-gray-300'}`}>
-                  {providerMedicine && providerMedicine.map((provider) => (
-                    <option key={provider.id} value={provider.id}>{provider.name}</option>
-                  ))}
-
-                </select>
+                <Controller
+                  control={control}
+                  name="providerId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={providerMedicine.map((p) => ({ value: p.id, label: p.name }))}
+                      value={field.value}
+                      onChange={(v) => field.onChange(v as string)}
+                      placeholder="Pesquisar fornecedor..."
+                      isMulti={false}
+                    />
+                  )}
+                />
                 {errors.providerId && <p className="text-sm text-red-500">{errors.providerId.message}</p>}
               </div>
               {/* Select for categoryId */}
               <div className="space-y-2">
                 <Label htmlFor="categoryId" className="text-gray-900">Categoria do Produco</Label>
-                <select id="categoryId" {...register('categoryId' )} className={`w-full rounded border px-3 py-2 ${errors.categoryId ? 'border-red-500' : touchedFields.categoryId ? 'border-green-500' : 'border-gray-300'}`} multiple={true}>
-                  {categoryMedicine && categoryMedicine.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-
-                </select>
+                <Controller
+                  control={control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={categoryMedicine.map((c) => ({ value: c.id, label: c.name }))}
+                      value={field.value}
+                      onChange={(v) => field.onChange(v as string[])}
+                      placeholder="Pesquisar / selecionar categorias..."
+                      isMulti={true}
+                    />
+                  )}
+                />
                 {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
               </div>
               {/* Description textarea */}
