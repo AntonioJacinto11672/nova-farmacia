@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { User, LogOut, Settings, ShoppingBag, ChevronDown } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-interface User {
+export interface User {
   id: string
   email: string
   userName: string

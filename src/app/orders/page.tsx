@@ -13,7 +13,7 @@ import OrderService from '@/api/services/order.service'
 import OrderDetailService from '@/api/services/orderDetail.service'
 import OrderItemService from '@/api/services/orderItem.service'
 import toast from 'react-hot-toast'
-import  OrderDetalheModal from '@/components/admin/modalS/OrderDetalheModal'
+import OrderDetalheModal from '@/components/admin/modalS/OrderDetalheModal'
 
 export interface RootOrder {
   data: DataOrder
@@ -24,10 +24,10 @@ export interface DataOrder {
   pageNumber: number
   total: number
   totalPages: number
-  data: Order[]
+  data: OrderType[]
 }
 
-export interface Order {
+export interface OrderType {
   id: string
   createdAt: string
   statusId: string
@@ -77,9 +77,9 @@ export interface OrderDetail {
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<OrderType[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const router = useRouter()
 
@@ -102,9 +102,9 @@ export default function OrdersPage() {
 
       // Buscar pedidos do usuário
       const ordersResponse = await orderService.getOrderByUserId(userData.id)
-      console.log(" No orderDetailhes ",ordersResponse)
-      if(ordersResponse.data){
-        const orderDataNew =  ordersResponse.data.data
+      console.log(" No orderDetailhes ", ordersResponse)
+      if (ordersResponse.data) {
+        const orderDataNew = ordersResponse.data.data
 
         setOrders(ordersResponse.data.data as any)
       }
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                             {order.Status.type}
                           </Badge>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Data:</span>
@@ -224,7 +224,7 @@ export default function OrdersPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <Button
                           onClick={() => {

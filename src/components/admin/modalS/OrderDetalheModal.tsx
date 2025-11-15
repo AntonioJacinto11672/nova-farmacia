@@ -1,7 +1,8 @@
-import { Order } from '@/app/orders/page';
+import { OrderType } from '@/app/orders/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormatPrice } from '@/utils/FormatPrice';
 import { FileText, Printer } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
@@ -9,7 +10,7 @@ import React from 'react';
 interface OrderDetailsModalProps {
   isOpen: boolean
   onClose: () => void
-  order: Order | null
+  order: OrderType | null
 }
 
 export default  function OrderDetalheModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
@@ -78,7 +79,7 @@ export default  function OrderDetalheModal({ isOpen, onClose, order }: OrderDeta
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-gray-100">Total</h4>
               <p className="text-sm font-bold text-pharmacy-600 dark:text-pharmacy-400">
-                {formatPrice(order.orderDetail.amountPaid || 0)}
+                {FormatPrice(order.orderDetail.amountPaid || 0)}
               </p>
             </div>
           </div>
