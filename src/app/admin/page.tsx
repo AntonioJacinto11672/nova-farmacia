@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Heart, Users, Package, DollarSign, TrendingUp } from 'lucide-react'
@@ -13,35 +14,85 @@ interface User {
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
 
-    if (userData && token) {
-      const parsedUser = JSON.parse(userData)
-      if (parsedUser.role === 'Administrador' || parsedUser.role === 'Admin') {
-        setUser(parsedUser)
-      } else {
-        if (typeof window !== 'undefined') window.location.href = '/dashboard'
+        if (!response.ok) {
+          router.replace('/auth/login')
+          return
+        }
+
+        const data = await response.json()
+        
+        // Verificar se é administrador
+        if (data.user.role === 'Administrador' || data.user.role === 'Admin') {
+          setUser(data.user)
+        } else {
+          router.replace('/dashboard')
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        router.replace('/auth/login')
+      } finally {
+        setIsLoading(false)
       }
-    } else {
-      if (typeof window !== 'undefined') window.location.href = '/auth/login'
     }
-  }, [])
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/auth/login'
+    checkAuth()
+  }, [router])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      router.replace('/auth/login')
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-       
-
+      {/* <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Heart className="w-8 h-8 text-blue-600 mr-3" />
+              <h1 className="text-2xl font-bold text-gray-900">NETFARMA</h1>
+              <span className="ml-4 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">ADMIN</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-700">Olá, {user ? user.name : ''}</span>
+              <Button variant="outline" onClick={handleLogout}>Sair</Button>
+            </div>
+          </div>
+        </div>
+      </header>
+ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Painel Administrativo</h2>

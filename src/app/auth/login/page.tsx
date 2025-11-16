@@ -6,46 +6,37 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 import UserService from '@/api/services/user.service'
-import RoleService from '@/api/services/role.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
-import { Heart, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import logo from '@/assets/logo/NEtFarma.png'
-
-export interface userResponseNew {
-  data: DataUser
-}
-
-export interface DataUser {
-  id: string
-  email: string
-  userName: string
-  phoneNumber: string
-  role: string
-  person: any
-}
-
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const userService = new UserService()
-  const roleService = new RoleService()
 
-  // Verificar se usuário já está logado
+  // Verificar se usuário já está logado (via cookie HTTP-Only)
   useEffect(() => {
-    const userData = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
-    
-    if (userData && token) {
-      router.replace('/')
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
+        if (response.ok) {
+          router.replace('/')
+        }
+      } catch (error) {
+        console.log('Não autenticado - continuando com login')
+      }
     }
+    checkAuth()
   }, [router])
 
   const {
@@ -72,9 +63,6 @@ export default function LoginPage() {
       if (response.data?.data) {
         const { accessToken } = response.data.data
 
-        // Salvar token no localStorage
-        localStorage.setItem('token', accessToken)
-
         // Buscar informações do usuário
         try {
           const userInfoResponse = await userService.getUserInfo(accessToken)
@@ -82,15 +70,32 @@ export default function LoginPage() {
           if (userInfoResponse.data) {
             const userInfo = userInfoResponse.data as any
 
-            //console.log("userInfo hire", userInfo)
+            // Enviar para API route que vai configurar cookies HTTP-Only
+            const loginResponse = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                email: data.email,
+                password: data.password,
+                user: userInfo,
+                token: accessToken
+              })
+            })
 
-            localStorage.setItem('user', JSON.stringify(userInfo))
-
-            // Redirecionar baseado no role
-            if (userInfo.role === 'Administrador') {
-              router.replace('/admin')
+            if (loginResponse.ok) {
+              const result = await loginResponse.json()
+              
+              // Redirecionar baseado no role (role vem do banco de dados via API)
+              if (userInfo.role === 'Administrador') {
+                router.replace('/admin')
+              } else {
+                router.replace('/')
+              }
             } else {
-              router.replace('/')
+              setError('Erro ao configurar sessão')
             }
           } else {
             setError('Erro ao obter informações do usuário')

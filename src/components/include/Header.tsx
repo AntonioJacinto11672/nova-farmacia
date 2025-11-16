@@ -27,10 +27,23 @@ export default function Header() {
 
     useEffect(() => {
         setMounted(true)
-        const userData = localStorage.getItem('user')
-        if (userData) {
-            setUser(JSON.parse(userData))
+
+        // Buscar dados do usuário via API (cookies HTTP-Only)
+        const fetchUser = async () => {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include'
+                })
+                if (response.ok) {
+                    const data = await response.json()
+                    setUser(data.user)
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do usuário:', error)
+            }
         }
+
+        fetchUser()
 
         // Fechar dropdown ao clicar fora
         const handleClickOutside = (event: MouseEvent) => {
@@ -44,12 +57,18 @@ export default function Header() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleLogout = () => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        setUser(null)
-        setShowUserDropdown(false)
-        router.push('/')
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            setUser(null)
+            setShowUserDropdown(false)
+            router.push('/')
+        } catch (error) {
+            console.error('Erro ao fazer logout:', error)
+        }
     }
 
     if (!mounted) return null
@@ -153,7 +172,7 @@ export default function Header() {
                                                 Meus Pedidos
                                             </Link>
                                             
-                                            {user.role === 'admin' && (
+                                            {user.role === 'Administrador' && (
                                                 <Link
                                                     href="/admin"
                                                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"

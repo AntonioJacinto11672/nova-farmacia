@@ -84,18 +84,40 @@ export default function OrdersPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const user = localStorage.getItem('user')
-    if (!user) {
-      router.push('/auth/login')
-      return
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          router.push('/auth/login')
+          return
+        }
+
+        loadOrders()
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        router.push('/auth/login')
+      }
     }
 
-    loadOrders()
+    checkAuth()
   }, [router])
 
   const loadOrders = async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        router.push('/auth/login')
+        return
+      }
+
+      const authData = await response.json()
+      const userData = authData.user
       const orderService = new OrderService()
       const orderDetailService = new OrderDetailService()
       const orderItemService = new OrderItemService()
