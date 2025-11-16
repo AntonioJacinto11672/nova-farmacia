@@ -189,7 +189,7 @@ function HomePage() {
               }
             `}</style>
               {categories.map((cat) => (
-                <Link key={cat.slug} href={`/category/${cat.slug}`} className="flex-shrink-0 group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4 min-w-[160px] flex flex-col items-center hover:shadow-lg transition-all relative">
+                <Link key={cat.slug} href={`/products?category=${cat.slug}`} className="flex-shrink-0 group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4 min-w-[160px] flex flex-col items-center hover:shadow-lg transition-all relative">
                   <div className="h-14 w-14 rounded-full bg-gradient-to-br from-pharmacy-100 to-pharmacy-200 dark:from-pharmacy-800 dark:to-pharmacy-900 mb-2 flex items-center justify-center text-pharmacy-700 dark:text-pharmacy-300 text-xl font-bold">
                     {cat.name[0]}
                   </div>

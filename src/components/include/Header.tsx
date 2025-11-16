@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import logoImg from '@/assets/logo/NEtFarma.png'
 import { useCart } from '@/hooks/useCart'
-import { useRouter } from 'next/navigation'
-import { User, LogOut, Settings, ShoppingBag, ChevronDown } from 'lucide-react'
+import { User, LogOut, Settings, ShoppingBag, ChevronDown, Search, Menu, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 export interface User {
@@ -20,6 +20,9 @@ export default function Header() {
     const [cartCount, setCartCount] = React.useState(0);
     const [user, setUser] = useState<User | null>(null)
     const [showUserDropdown, setShowUserDropdown] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [showMobileSearch, setShowMobileSearch] = useState(false)
+    const [showMobileMenu, setShowMobileMenu] = useState(false)
     const { cartTotalQty } = useCart()
     const router = useRouter()
     const { theme, setTheme } = useTheme()
@@ -68,6 +71,15 @@ export default function Header() {
             router.push('/')
         } catch (error) {
             console.error('Erro ao fazer logout:', error)
+        }
+    }
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (searchQuery.trim()) {
+            router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+            setSearchQuery('')
+            setShowMobileSearch(false)
         }
     }
 

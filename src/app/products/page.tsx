@@ -1,5 +1,6 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image, { type StaticImageData } from 'next/image'
 import farmaco from '@/assets/farmaco.jpg'
@@ -48,8 +49,11 @@ const SAMPLE_PRODUCTS: Product[] = [
 ]
 
 export default function ProductsPage() {
+    const searchParams = useSearchParams()
+    const categoryParam = searchParams.get('category') || 'all'
+
     const [cartCount, setCartCount] = React.useState<number>(0)
-    const [selectedCategory, setSelectedCategory] = React.useState<string>('all')
+    const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryParam)
     const [search, setSearch] = React.useState<string>('')
     const [minPrice, setMinPrice] = React.useState<number | ''>('')
     const [maxPrice, setMaxPrice] = React.useState<number | ''>('')
@@ -59,6 +63,7 @@ export default function ProductsPage() {
     const [pageSizeProvider, setPageSizeProvider] = useState<number>(10)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<ApiError | null>(null);
+    const [sortBy, setSortBy] = useState<'relevance' | 'price-asc' | 'price-desc' | 'newest'>('relevance')
     // pagination / load-more
     const PAGE_SIZE = 9 // show at least 9 products initially
     const [visibleCount, setVisibleCount] = React.useState<number>(PAGE_SIZE)
@@ -78,10 +83,26 @@ export default function ProductsPage() {
         return true
     })
 
+    // Sort products
+    const sortedProducts = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+            case 'price-asc':
+                return a.price - b.price
+            case 'price-desc':
+                return b.price - a.price
+            case 'newest':
+                // Sort by ID descending as fallback (assuming newer items have higher IDs)
+                return b.id.localeCompare(a.id)
+            case 'relevance':
+            default:
+                return 0
+        }
+    })
+
     // reset visible count when filters change
     React.useEffect(() => {
-        setVisibleCount(Math.min(PAGE_SIZE, filtered.length))
-    }, [search, selectedCategory, minPrice, maxPrice, filtered.length])
+        setVisibleCount(Math.min(PAGE_SIZE, sortedProducts.length))
+    }, [search, selectedCategory, minPrice, maxPrice, sortBy, sortedProducts.length])
 
     const handleLoadMore = () => {
         setVisibleCount((v) => Math.min(filtered.length, v + 1)) // show one more per click
@@ -222,19 +243,18 @@ export default function ProductsPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setSearch('')
-                                            setSelectedCategory('all')
-                                            setMinPrice('')
-                                            setMaxPrice('')
-                                        }}
-                                        className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm"
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2">Ordenar por</label>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as any)}
+                                        className="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-800"
                                     >
-                                        Limpar
-                                    </button>
-                                    <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm">Aplicar</button>
+                                        <option value="relevance">Relevância</option>
+                                        <option value="price-asc">Preço (menor)</option>
+                                        <option value="price-desc">Preço (maior)</option>
+                                        <option value="newest">Mais novo</option>
+                                    </select>
                                 </div>
                             </div>
                         </aside>
@@ -249,12 +269,17 @@ export default function ProductsPage() {
                             )}
                             
                             {!loading && filtered.length === 0 && (
-                                <div className="col-span-full bg-white p-6 rounded shadow text-center">Nenhum produto encontrado.</div>
+                                <div className="col-span-full bg-white dark:bg-gray-800 p-6 rounded shadow text-center">
+                                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-gray-600 dark:text-gray-400 text-lg">Nenhum produto encontrado.</p>
+                                </div>
                             )}
 
                             {!loading && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filtered.slice(0, visibleCount).map((product) => (
+                                    {sortedProducts.slice(0, visibleCount).map((product) => (
                                         <ProductCard 
                                             key={product.id} 
                                             id={product.id} 
@@ -270,15 +295,15 @@ export default function ProductsPage() {
                             )}
                             {/* Load more button */}
                             <div className="mt-6 flex items-center justify-center md:col-span-3">
-                                {visibleCount < filtered.length ? (
+                                {visibleCount < sortedProducts.length ? (
                                     <button
                                         onClick={handleLoadMore}
-                                        className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                                        className="px-6 py-2 rounded bg-pharmacy-600 hover:bg-pharmacy-700 text-white transition-colors"
                                     >
                                         Ver mais produtos
                                     </button>
                                 ) : (
-                                    filtered.length > 0 && <div className="text-sm text-gray-500">Todos os produtos foram carregados.</div>
+                                    sortedProducts.length > 0 && <div className="text-sm text-gray-500">Todos os produtos foram carregados.</div>
                                 )}
                             </div>
                         </section>
