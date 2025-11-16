@@ -6,7 +6,7 @@ import { Users, Box, Package, Tag, BarChart2, Home, ChevronDown } from 'lucide-r
 
 const MENU = [
   { href: '/admin', label: 'Dashboard', icon: Home },
-  { href: '/admin/users', label: 'Gerir Utilizadores', icon: Users },
+  { href: '/admin/manage-users', label: 'Gerir Utilizadores', icon: Users },
   { href: '/admin/products', label: 'Gerir Produtos', icon: Box },
   { href: '/admin/manage-orders', label: 'Gerir Pedidos', icon: Package },
   { href: '/admin/providers', label: 'Gerir Fornecedores', icon: Tag },
