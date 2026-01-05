@@ -77,7 +77,7 @@ export default function Header() {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
         if (searchQuery.trim()) {
-            router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+            router.push(`/products?q=${encodeURIComponent(searchQuery)}`)
             setSearchQuery('')
             setShowMobileSearch(false)
         }
@@ -98,8 +98,8 @@ export default function Header() {
                 </div>
                 {/* Search center */}
                 <div className="flex-1 flex justify-center">
-                    <form className="w-full max-w-md flex gap-2">
-                        <input className="flex-1 h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pharmacy-500" placeholder="Pesquisar produtos..." />
+                    <form className="w-full max-w-md flex gap-2" onSubmit={handleSearch}>
+                        <input value={searchQuery} className="flex-1 h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pharmacy-500" placeholder="Pesquisar produtos..." onChange={(e) => setSearchQuery(e.target.value)} />
                         <button type="submit" className="rounded-md bg-pharmacy-600 hover:bg-pharmacy-700 px-4 text-white transition-colors">Pesquisar</button>
                     </form>
                 </div>

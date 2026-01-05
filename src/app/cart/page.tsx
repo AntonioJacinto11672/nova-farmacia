@@ -96,41 +96,39 @@ export default function Cart() {
 
   const handleContinueToDelivery = async () => {
     if (cartProducts && cartProducts.length > 0) {
-      // Verificar se há usuário logado
-      const user = localStorage.getItem('user')
-      if (!user) {
-        toast.error('Por favor, faça login para continuar')
-        return
-      }
-
-      const userData = JSON.parse(user)
-      setIsLoadingAddress(true)
-
+      // Verificar se há usuário logado via API
       try {
-        // Verificar se já existe endereço
-        const addressService = new AddressService()
-        const addressResponse = await addressService.getAddressByUserId(userData.id)
-        
-        if (addressResponse.data && addressResponse.data.data) {
-          setExistingAddress(addressResponse.data.data)
-          // Preencher formulário com dados existentes
-       /*    setAddressData({
-            fullName: addressResponse.data.data.fullName || '',
-            phone: addressResponse.data.data.phone || '',
-            address: `${addressResponse.data.data.street}, ${addressResponse.data.data.number}`,
-            referencePoint: addressResponse.data.data.complement || '',
-            useCurrentLocation: false,
-            latitude: addressResponse.data.data.latitude || 0,
-            longitude: addressResponse.data.data.longitude || 0
-          }) */
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
+        if (!response.ok) {
+          toast.error('Por favor, faça login para continuar')
+          return
         }
-      } catch (error) {
-        console.log('Erro ao carregar endereço:', error)
-      } finally {
-        setIsLoadingAddress(false)
-      }
+        const data = await response.json()
+        const userData = data.user
 
-      setShowAddressForm(true)
+        setIsLoadingAddress(true)
+
+        try {
+          // Verificar se já existe endereço
+          const addressService = new AddressService()
+          const addressResponse = await addressService.getAddressByUserId(userData.id)
+          
+          if (addressResponse.data && addressResponse.data.data) {
+            setExistingAddress(addressResponse.data.data)
+          }
+        } catch (error) {
+          console.log('Erro ao carregar endereço:', error)
+        } finally {
+          setIsLoadingAddress(false)
+        }
+
+        setShowAddressForm(true)
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        toast.error('Erro ao verificar autenticação')
+      }
     }
   }
 
@@ -148,9 +146,18 @@ export default function Cart() {
     setIsProcessing(true)
 
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}')
+      // Obter usuário via API
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        toast.error('Sessão expirada. Por favor, faça login novamente')
+        return
+      }
+      const data = await response.json()
+      const userData = data.user
 
-      if (!userData.id) {
+      if (!userData?.id) {
         toast.error('Usuário não encontrado. Faça login novamente.')
         setIsProcessing(false)
         return
@@ -573,13 +580,13 @@ export default function Cart() {
                   {showAddressForm && (
                     <>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Taxa de entrega</span>
-                        <span className="font-medium">{deliveryFee > 0 ? formatPrice(deliveryFee) : 'Calculando...'}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Taxa de entrega</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">Gratuita</span>
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Tempo estimado</span>
-                        <span className="font-medium">{estimatedTime > 0 ? `${estimatedTime} min` : 'Calculando...'}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Tempo estimado</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">✓ Menos de 24 horas</span>
                       </div>
                     </>
                   )}
@@ -587,7 +594,7 @@ export default function Cart() {
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between text-lg font-bold">
                     <span className="text-gray-900 dark:text-gray-100">Total</span>
                     <span className="text-pharmacy-600 dark:text-pharmacy-400">
-                      {formatPrice(cartTotalAmount + deliveryFee)}
+                      {formatPrice(cartTotalAmount)}
                     </span>
                   </div>
                 </div>

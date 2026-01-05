@@ -28,13 +28,17 @@ export default function InvoicePage() {
   const loadOrderData = async () => {
     try {
       console.log("In trycatch")
-      const user = localStorage.getItem('user')
-      if (!user) {
+      // Obter dados do usuário via API
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
         router.push('/auth/login')
         return
       }
 
-      const userData = JSON.parse(user)
+      const data = await response.json()
+      const userData = data.user
       setUserData(userData)
 
       const orderService = new OrderService()

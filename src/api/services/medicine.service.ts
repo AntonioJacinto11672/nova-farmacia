@@ -23,8 +23,19 @@ class MedicineService{
         return response;
     }
 
-    async getAllMediciine(pageSize: any = 10, pageNumber: any = 1): Promise<ApiResponse<MedicineResponse[]>> {
-        const response = await this.api.get<MedicineResponse[]>(`/medicines?pageSize=${pageSize}&pageNumber=${pageNumber}`);
+    async getAllMediciine(pageSize: any = 10, pageNumber: any = 1, filters?: { q?: string, category?: string, minPrice?: number | '', maxPrice?: number | '', sortBy?: string }): Promise<ApiResponse<MedicineResponse[]>> {
+        const params = new URLSearchParams();
+        params.append('pageSize', String(pageSize));
+        params.append('pageNumber', String(pageNumber));
+        if (filters) {
+            if (filters.q) params.append('q', String(filters.q));
+            if (filters.category) params.append('category', String(filters.category));
+            if (filters.minPrice !== undefined && filters.minPrice !== '') params.append('minPrice', String(filters.minPrice));
+            if (filters.maxPrice !== undefined && filters.maxPrice !== '') params.append('maxPrice', String(filters.maxPrice));
+            if (filters.sortBy) params.append('sortBy', String(filters.sortBy));
+        }
+        const query = params.toString();
+        const response = await this.api.get<MedicineResponse[]>(`/medicines?${query}`);
         return response;
     }
     async getMediciineById(medicineId: string): Promise<ApiResponse<MedicineResponse>> {

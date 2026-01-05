@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image, { type StaticImageData } from 'next/image'
 import farmaco from '@/assets/farmaco.jpg'
@@ -109,37 +109,55 @@ export default function ProductsPage() {
     }
 
 
-    //Pegar os dados od Produtos na bd
+    // Sync state with URL params and load products from API with filters
+  const router = useRouter()
+
   React.useEffect(() => {
-    loadProducts()
-    //console.log("Aqui não está mudar", pageSize)
-  }, [pageSize]);
+    const queryParam = searchParams.get('q') || ''
+    const categoryParam = searchParams.get('category') || 'all'
+    const minParam = searchParams.get('minPrice') || ''
+    const maxParam = searchParams.get('maxPrice') || ''
+    const sortParam = searchParams.get('sort') || 'relevance'
 
+    setSearch(queryParam)
+    setSelectedCategory(categoryParam)
+    setMinPrice(minParam === '' ? '' : Number(minParam))
+    setMaxPrice(maxParam === '' ? '' : Number(maxParam))
+    setSortBy(sortParam as any)
 
-  /* Const pegar todos os Produtos */
+    // load products from server using the params
+    loadProducts({
+      q: queryParam || undefined,
+      category: categoryParam !== 'all' ? categoryParam : undefined,
+      minPrice: minParam === '' ? undefined : Number(minParam),
+      maxPrice: maxParam === '' ? undefined : Number(maxParam),
+      sortBy: sortParam
+    })
 
-  const loadProducts = () => {
+    // also reload providers
+    useProvider.getAllProvider(pageSizeProvider).then(provider => {
+      if (provider.data) setAllProviders(provider.data.data)
+    })
+
+  }, [searchParams, pageSize])
+
+  const loadProducts = (filters?: any) => {
     try {
       let toastId = toast.loading("Carregar os produtos...")
 
-      useMedicine.getAllMediciine(pageSize).then(e => {
-
+      useMedicine.getAllMediciine(pageSize, 1, filters).then(e => {
         if (e.error) {
           setError(e.error);
           setLoading(false);
           console.log("Deu erro", e.error);
-          toast.error("Erro ao carregar os  Productos")
-
+          toast.error("Erro ao carregar os Productos")
         } else {
           if (e.data) {
-            setAllProduct(e.data.data);
-
-            //console.log("Peguei os dados >>>>>", e.data);
-            toast.success("Productos carregados com sucesso!")
+            setAllProduct(e.data.data || []);
+            toast.success("Produtos carregados com sucesso!")
           }
           setLoading(false);
         }
-
       }).catch(err => {
         setError(err);
         setLoading(false);
@@ -148,16 +166,31 @@ export default function ProductsPage() {
         setLoading(false)
       });
 
-      useProvider.getAllProvider(pageSizeProvider).then(provider => {
-        if (provider.data) {
-          setAllProviders(provider.data.data)
-
-        }
-      })
     } catch (error) {
       console.log("Error: ", error)
-
     }
+  }
+
+  const applyFiltersToUrl = () => {
+    const params = new URLSearchParams()
+    if (search) params.append('q', String(search))
+    if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory)
+    if (minPrice !== '') params.append('minPrice', String(minPrice))
+    if (maxPrice !== '') params.append('maxPrice', String(maxPrice))
+    if (sortBy) params.append('sort', String(sortBy))
+    const qs = params.toString()
+    router.push(`/products${qs ? `?${qs}` : ''}`)
+  }
+
+  const handleCategoryClick = (slug: string) => {
+    const params = new URLSearchParams()
+    if (search) params.append('q', String(search))
+    if (slug && slug !== 'all') params.append('category', slug)
+    if (minPrice !== '') params.append('minPrice', String(minPrice))
+    if (maxPrice !== '') params.append('maxPrice', String(maxPrice))
+    if (sortBy) params.append('sort', String(sortBy))
+    const qs = params.toString()
+    router.push(`/products${qs ? `?${qs}` : ''}`)
   }
 
   /*   const handleMorePage = () => {
@@ -214,7 +247,7 @@ export default function ProductsPage() {
                                         {CATEGORIES.map((c) => (
                                             <button
                                                 key={c.slug}
-                                                onClick={() => setSelectedCategory(c.slug)}
+                                                onClick={() => handleCategoryClick(c.slug)}
                                                 className={`text-left px-3 py-2 rounded ${selectedCategory === c.slug ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'}`}
                                             >
                                                 {c.name}

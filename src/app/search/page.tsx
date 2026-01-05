@@ -43,13 +43,32 @@ export default function SearchPage() {
 
     useEffect(() => {
         loadProducts()
-    }, [pageSize])
+    }, [pageSize, searchParams])
 
     const loadProducts = () => {
         try {
+            const query = searchParams.get('q') || ''
+            const category = searchParams.get('category') || 'all'
+            const minParam = searchParams.get('minPrice') || ''
+            const maxParam = searchParams.get('maxPrice') || ''
+            const sortParam = searchParams.get('sort') || 'relevance'
+
+            // keep local state in sync
+            setSearch(query)
+            setSelectedCategory(category)
+            setMinPrice(minParam === '' ? '' : Number(minParam))
+            setMaxPrice(maxParam === '' ? '' : Number(maxParam))
+            setSortBy(sortParam as any)
+
             let toastId = toast.loading("Carregando resultados...")
 
-            useMedicine.getAllMediciine(pageSize).then(e => {
+            useMedicine.getAllMediciine(pageSize, 1, {
+                q: query || undefined,
+                category: category !== 'all' ? category : undefined,
+                minPrice: minParam === '' ? undefined : Number(minParam),
+                maxPrice: maxParam === '' ? undefined : Number(maxParam),
+                sortBy: sortParam
+            }).then(e => {
                 if (e.error) {
                     console.error("Erro ao carregar produtos:", e.error)
                     toast.error("Erro ao carregar produtos")

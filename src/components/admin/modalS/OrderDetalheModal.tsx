@@ -13,7 +13,7 @@ interface OrderDetailsModalProps {
   order: OrderType | null
 }
 
-export default  function OrderDetalheModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
+export default function OrderDetalheModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null
 
   const formatPrice = (price: number) => {
@@ -56,7 +56,7 @@ export default  function OrderDetalheModal({ isOpen, onClose, order }: OrderDeta
             ×
           </Button>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* Informações do pedido */}
           <div className="grid grid-cols-2 gap-4">
@@ -82,7 +82,19 @@ export default  function OrderDetalheModal({ isOpen, onClose, order }: OrderDeta
                 {FormatPrice(order.orderDetail.amountPaid || 0)}
               </p>
             </div>
-          </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Entregador</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                N/A
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Tempo para Entrega</h4>
+              <p className="text-sm font-bold text-pharmacy-600 dark:text-pharmacy-400">
+                Menos de 24hrs 
+              </p>
+            </div>
+          </div> 
 
           {/* Itens do pedido */}
           <div>
