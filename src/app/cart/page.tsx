@@ -15,6 +15,8 @@ import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
 import OrderItemService from '@/api/services/orderItem.service'
 import AddressService from '@/api/services/address.service'
+import ApiAdressService from '@/api/common/apiAdress.service'
+import { MunicipioApiType, ProvinceApiType } from '@/type/ProvinceApiType'
 
 export default function Cart() {
   const {
@@ -35,6 +37,43 @@ export default function Cart() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
   const [existingAddress, setExistingAddress] = useState<any>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
+  const [province, setProvince] = useState<ProvinceApiType[]>([])
+  const [selectedProvinceSlug, setSelectedProvinceSlug] = useState<string>()
+  const [municipality, setMunicipality] = useState<MunicipioApiType[]>()
+
+
+  const apiAdress = new ApiAdressService()
+  const fetchProvincias = async () => {
+    try {
+      const data = await apiAdress.getProvincias()
+      //console.log('Provincias:', data)
+      setProvince(data.data) // Exemplo: definir a primeira província
+    } catch (error) {
+      console.error('Erro ao buscar provincias:', error)
+    }
+  }
+
+  const fetchMunicipios = async (slug: string) => {
+    try {
+      const data = await apiAdress.getProvinciaBySlug(slug)
+      console.log('Municipios da provincia:', data.data.municipios)
+      setMunicipality(data.data.municipios) // Exemplo: definir a primeira província
+    } catch (error) {
+      console.error('Erro ao buscar municipios:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchProvincias()
+
+    //console.log("As provincias sao:", province)
+    if (selectedProvinceSlug) {
+      fetchMunicipios(selectedProvinceSlug)
+    } else {
+      setMunicipality([])
+    }
+  }, [showAddressForm, selectedProvinceSlug])
+
 
   // Formulário de endereço
   const [addressData, setAddressData] = useState({
@@ -114,7 +153,7 @@ export default function Cart() {
           // Verificar se já existe endereço
           const addressService = new AddressService()
           const addressResponse = await addressService.getAddressByUserId(userData.id)
-          
+
           if (addressResponse.data && addressResponse.data.data) {
             setExistingAddress(addressResponse.data.data)
           }
@@ -125,6 +164,8 @@ export default function Cart() {
         }
 
         setShowAddressForm(true)
+        //await fetchProvincias()
+
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error)
         toast.error('Erro ao verificar autenticação')
@@ -196,7 +237,7 @@ export default function Cart() {
       // 1. Criar o pedido (passando userId)
       const orderResponse = await new OrderService().createOrder(userData.id)
 
-      console.log('Order Response:', orderResponse)
+      //console.log('Order Response:', orderResponse)
 
       if (orderResponse.error || !orderResponse.data) {
         toast.error(orderResponse.error?.message || 'Erro ao criar pedido')
@@ -244,7 +285,7 @@ export default function Cart() {
           } else {
 
             // Registrar os itens do pedido
-            
+
             if (Array.isArray(calculatedData.orderItems)) {
               await Promise.all(calculatedData.orderItems.map(async (e: any) => {
                 const resultCreateOrderItem = await new OrderItemService().createOrderItem(e.quantity, e.medicineId, orderId);
@@ -285,6 +326,7 @@ export default function Cart() {
       currency: 'AOA'
     }).format(price)
   }
+
 
   if (!cartProducts || cartProducts.length === 0) {
     return (
@@ -422,14 +464,64 @@ export default function Cart() {
                         onChange={(e) => setAddressData({ ...addressData, phone: e.target.value })}
                       />
                     </div>
+                    {/* Endereço de entrega */}
+                    <div className='lg:flex  gap-4'>
+                      <div>
+                        <Label htmlFor="address">Província / Morada *</Label>
+                        <select
+                          id="address"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
+                          value={selectedProvinceSlug}
+                          onChange={(e) => setSelectedProvinceSlug(e.target.value)}
+                        >
+                          <option value="" >Selecione uma Pronvicia</option>
+                          {
+                            province && province.map((prov) => (
+                              <option key={prov.slug} value={prov.slug}>{prov.nome}</option>
+                            ))
+                          }
+                        </select>
+
+                      </div>
+
+                      <div>
+                        <Label htmlFor="address">Município / Morada *</Label>
+                        <select
+                          id="address"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
+                          value={addressData.address}
+                          onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
+                        >
+                          <option value="" >Selecione um Município</option>
+                          {
+                            municipality && municipality.map((muni) => (
+                              <option key={muni.slug} value={muni.nome}>{muni.nome}</option>
+                            ))
+                          }
+
+                        </select>
+
+                      </div>
+                    </div>
 
                     <div>
-                      <Label htmlFor="address">Endereço / Morada *</Label>
-                      <Input
+                      <Label htmlFor="address">Endereço especificado/ Morada *</Label>
+
+                      <select
                         id="address"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
                         value={addressData.address}
                         onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
-                      />
+                      >
+                        <option value="">Selecione um endereço</option>
+                        <option value="Viana, estalagem, Avenida Deolinda Rodrigues, 123">Viana, estalagem, Avenida Deolinda Rodrigues, 123</option>
+                        <option value="Luanda, distrito Urbano da Mainga, Rua Comandante Valódia, 45">Luanda, distrito Urbano da Mainga, Rua Comandante Valódia, 45</option>
+                        <option value="Luanda, Mutamba, Travessa do Comércio, 78">Luanda, Mutamba, Travessa do Comércio, 78</option>
+                        <option value="Talatona, Bairro do Jardim, Avenida Fidel Castro, 9">Talatona, Bairro do Jardim, Avenida Fidel Castro, 9</option>
+                        <option value="Kilamba Kiaxi, Bairro do Zango, Rua da Paz, 56">Kilamba Kiaxi, Bairro do Zango, Rua da Paz, 56</option>
+                        <option value="Cacuaco, Bairro do Rocha Pinto, Rua dos Coqueiros, 34">Cacuaco, Bairro do Rocha Pinto, Rua dos Coqueiros, 34</option>
+                      </select>
+
                     </div>
 
                     <div>
@@ -484,20 +576,18 @@ export default function Cart() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
-                      <div 
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                          selectedPaymentMethod === 'multicaixa-express' 
-                            ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20' 
-                            : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
-                        }`}
+                      <div
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'multicaixa-express'
+                          ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                          }`}
                         onClick={() => setSelectedPaymentMethod('multicaixa-express')}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-full border-2 ${
-                            selectedPaymentMethod === 'multicaixa-express' 
-                              ? 'border-pharmacy-600 bg-pharmacy-600' 
-                              : 'border-gray-300 dark:border-gray-600'
-                          }`}>
+                          <div className={`w-4 h-4 rounded-full border-2 ${selectedPaymentMethod === 'multicaixa-express'
+                            ? 'border-pharmacy-600 bg-pharmacy-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}>
                             {selectedPaymentMethod === 'multicaixa-express' && (
                               <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
                             )}
@@ -509,20 +599,18 @@ export default function Cart() {
                         </div>
                       </div>
 
-                      <div 
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                          selectedPaymentMethod === 'multicaixa' 
-                            ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20' 
-                            : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
-                        }`}
+                      <div
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'multicaixa'
+                          ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                          }`}
                         onClick={() => setSelectedPaymentMethod('multicaixa')}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-full border-2 ${
-                            selectedPaymentMethod === 'multicaixa' 
-                              ? 'border-pharmacy-600 bg-pharmacy-600' 
-                              : 'border-gray-300 dark:border-gray-600'
-                          }`}>
+                          <div className={`w-4 h-4 rounded-full border-2 ${selectedPaymentMethod === 'multicaixa'
+                            ? 'border-pharmacy-600 bg-pharmacy-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}>
                             {selectedPaymentMethod === 'multicaixa' && (
                               <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
                             )}
