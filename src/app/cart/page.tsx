@@ -36,6 +36,23 @@ export default function Cart() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
+  const [expressPhone, setExpressPhone] = useState('')
+  const [expressPhoneError, setExpressPhoneError] = useState('')
+
+  // Card payment fields
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardHolder, setCardHolder] = useState('')
+  const [cardExpiry, setCardExpiry] = useState('')
+  const [cardCvv, setCardCvv] = useState('')
+  const [cardError, setCardError] = useState('')
+
+  // MBWay / Mobile Money
+  const [mbwayPhone, setMbwayPhone] = useState('')
+  const [mbwayError, setMbwayError] = useState('')
+
+  // Cash on delivery confirmation (optional)
+  const [codConfirm, setCodConfirm] = useState(false)
+
   const [existingAddress, setExistingAddress] = useState<any>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const [province, setProvince] = useState<ProvinceApiType[]>([])
@@ -81,6 +98,28 @@ export default function Cart() {
     setSelectedMunicipality('')
     setAddressData(prev => ({ ...prev, address: '' }))
   }, [selectedProvinceSlug])
+
+  // Limpar campos específicos de pagamento quando o método selecionado mudar
+  useEffect(() => {
+    if (selectedPaymentMethod !== 'multicaixa-express') {
+      setExpressPhone('')
+      setExpressPhoneError('')
+    }
+    if (selectedPaymentMethod !== 'card') {
+      setCardNumber('')
+      setCardHolder('')
+      setCardExpiry('')
+      setCardCvv('')
+      setCardError('')
+    }
+    if (selectedPaymentMethod !== 'mbway') {
+      setMbwayPhone('')
+      setMbwayError('')
+    }
+    if (selectedPaymentMethod !== 'cod') {
+      setCodConfirm(false)
+    }
+  }, [selectedPaymentMethod])
 
 
   // Formulário de endereço
@@ -189,6 +228,51 @@ export default function Cart() {
 
     if (!selectedPaymentMethod) {
       toast.error('Por favor, selecione um método de pagamento')
+      return
+    }
+
+    // Se o método for Multicaixa Express, validar número e simular abertura do checkout
+    if (selectedPaymentMethod === 'multicaixa-express') {
+      if (!expressPhone || !/^\d{9}$/.test(expressPhone)) {
+        toast.error('Por favor, informe um número de telefone válido de 9 dígitos para Multicaixa Express')
+        setExpressPhoneError('Número inválido. Deve conter 9 dígitos.')
+        return
+      }
+      // Mensagem simulada de abertura do serviço express
+      toast.success(`Abrindo Multicaixa Express para finalizar a compra com o número ${expressPhone}`)
+      // Simular redirecionamento externo (opcional). Não continuar com o fluxo de criação de pedido.
+      // window.open(`https://multicaixa-express.example/checkout?phone=${expressPhone}`, '_blank')
+      return
+    }
+
+    // Validações para outros métodos de pagamento
+    if (selectedPaymentMethod === 'card') {
+      // validações básicas de cartão
+      const cleanCard = cardNumber.replace(/\s/g, '')
+      if (!/^[0-9]{13,19}$/.test(cleanCard) || !cardHolder || !/^\d{2}\/\d{2}$/.test(cardExpiry) || !/^\d{3,4}$/.test(cardCvv)) {
+        setCardError('Por favor, insira dados de cartão válidos (número, validade MM/AA e CVV)')
+        toast.error('Dados do cartão inválidos')
+        return
+      }
+    }
+
+    if (selectedPaymentMethod === 'mbway') {
+      if (!mbwayPhone || !/^\d{9}$/.test(mbwayPhone)) {
+        setMbwayError('Por favor, informe um número MBWay válido de 9 dígitos')
+        toast.error('Número MBWay inválido')
+        return
+      }
+    }
+
+    if (selectedPaymentMethod === 'cod') {
+      if (!codConfirm) {
+        toast.error('Por favor, confirme que pagará em dinheiro na entrega')
+        return
+      }
+    }
+
+    if (selectedPaymentMethod === 'multicaixa') {
+      toast.error('Multicaixa ainda está em desenvolvimento. Selecione outro método ou Multicaixa Express.')
       return
     }
 
@@ -592,6 +676,7 @@ export default function Cart() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
+                      {/* Multicaixa Express (requires phone) */}
                       <div
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'multicaixa-express'
                           ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
@@ -610,11 +695,12 @@ export default function Cart() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Multicaixa Express</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento instantâneo via Multicaixa</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento instantâneo via Multicaixa (requer número de telefone de 9 dígitos)</p>
                           </div>
                         </div>
                       </div>
 
+                      {/* Multicaixa (normal) */}
                       <div
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'multicaixa'
                           ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
@@ -633,12 +719,143 @@ export default function Cart() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Multicaixa</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Disponível em breve</p>
-                            <span className="text-xs text-orange-600 dark:text-orange-400">Em desenvolvimento</span>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento via terminal Multicaixa</p>
                           </div>
                         </div>
                       </div>
-                    </div>
+
+                      {/* Cartão (simulado) */}
+                      <div
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'card'
+                          ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                          }`}
+                        onClick={() => setSelectedPaymentMethod('card')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${selectedPaymentMethod === 'card'
+                            ? 'border-pharmacy-600 bg-pharmacy-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}>
+                            {selectedPaymentMethod === 'card' && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Cartão</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento com cartão (simulado)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* MBWay / Mobile Money (simulado) */}
+                      <div
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'mbway'
+                          ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                          }`}
+                        onClick={() => setSelectedPaymentMethod('mbway')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${selectedPaymentMethod === 'mbway'
+                            ? 'border-pharmacy-600 bg-pharmacy-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}>
+                            {selectedPaymentMethod === 'mbway' && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">MBWay / Mobile Money</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento por telemóvel (simulado)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dinheiro na entrega */}
+                      <div
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'cod'
+                          ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
+                          }`}
+                        onClick={() => setSelectedPaymentMethod('cod')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${selectedPaymentMethod === 'cod'
+                            ? 'border-pharmacy-600 bg-pharmacy-600'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}>
+                            {selectedPaymentMethod === 'cod' && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Dinheiro na entrega</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Pague ao receber a sua encomenda</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Se Multicaixa Express estiver selecionado, mostrar input de telefone */}
+                      {selectedPaymentMethod === 'multicaixa-express' && (
+                        <div className="mt-3">
+                          <Label htmlFor="express-phone">Número (9 dígitos) *</Label>
+                          <Input
+                            id="express-phone"
+                            value={expressPhone}
+                            onChange={(e) => { const onlyDigits = e.target.value.replace(/\D/g, ''); setExpressPhone(onlyDigits); if (expressPhoneError) setExpressPhoneError(''); }}
+                            placeholder="Ex: 923123456"
+                          />
+                          {expressPhoneError && (
+                            <p className="text-sm text-red-600 mt-1">{expressPhoneError}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Card payment form */}
+                      {selectedPaymentMethod === 'card' && (
+                        <div className="mt-3 grid grid-cols-1 gap-3">
+                          <div>
+                            <Label htmlFor="card-number">Número do Cartão *</Label>
+                            <Input id="card-number" value={cardNumber} onChange={(e) => { setCardNumber(e.target.value.replace(/\s/g, '')); if (cardError) setCardError(''); }} placeholder="Ex: 4111111111111111" />
+                          </div>
+                          <div>
+                            <Label htmlFor="card-holder">Nome no Cartão *</Label>
+                            <Input id="card-holder" value={cardHolder} onChange={(e) => setCardHolder(e.target.value)} placeholder="Nome como está no cartão" />
+                          </div>
+                          <div className="lg:flex gap-3">
+                            <div className="flex-1">
+                              <Label htmlFor="card-expiry">Validade (MM/AA) *</Label>
+                              <Input id="card-expiry" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} placeholder="MM/AA" />
+                            </div>
+                            <div className="w-32">
+                              <Label htmlFor="card-cvv">CVV *</Label>
+                              <Input id="card-cvv" value={cardCvv} onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))} placeholder="123" />
+                            </div>
+                          </div>
+                          {cardError && (<p className="text-sm text-red-600 mt-1">{cardError}</p>)}
+                        </div>
+                      )}
+
+                      {/* MBWay / Mobile Money form */}
+                      {selectedPaymentMethod === 'mbway' && (
+                        <div className="mt-3">
+                          <Label htmlFor="mbway-phone">Número MBWay (9 dígitos) *</Label>
+                          <Input id="mbway-phone" value={mbwayPhone} onChange={(e) => { const onlyDigits = e.target.value.replace(/\D/g, ''); setMbwayPhone(onlyDigits); if (mbwayError) setMbwayError(''); }} placeholder="Ex: 923123456" />
+                          {mbwayError && (<p className="text-sm text-red-600 mt-1">{mbwayError}</p>)}
+                        </div>
+                      )}
+
+                      {/* Cash on Delivery confirmation */}
+                      {selectedPaymentMethod === 'cod' && (
+                        <div className="mt-3">
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" checked={codConfirm} onChange={(e) => setCodConfirm(e.target.checked)} />
+                            <span className="text-sm">Confirmo que pagarei em dinheiro na entrega</span>
+                          </label>
+                        </div>
+                      )} 
+                    </div> 
 
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Informações Importantes</h4>
