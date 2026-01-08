@@ -17,6 +17,7 @@ import OrderItemService from '@/api/services/orderItem.service'
 import AddressService from '@/api/services/address.service'
 import ApiAdressService from '@/api/common/apiAdress.service'
 import { MunicipioApiType, ProvinceApiType } from '@/type/ProvinceApiType'
+import especifAdressData, { especifAdressDataType } from '@/utils/especifAdressData'  
 
 export default function Cart() {
   const {
@@ -38,9 +39,10 @@ export default function Cart() {
   const [existingAddress, setExistingAddress] = useState<any>(null)
   const [isLoadingAddress, setIsLoadingAddress] = useState(false)
   const [province, setProvince] = useState<ProvinceApiType[]>([])
-  const [selectedProvinceSlug, setSelectedProvinceSlug] = useState<string>()
-  const [municipality, setMunicipality] = useState<MunicipioApiType[]>()
-
+  const [selectedProvinceSlug, setSelectedProvinceSlug] = useState<string>('')
+  const [municipality, setMunicipality] = useState<MunicipioApiType[]>([])
+  const [selectedMunicipality, setSelectedMunicipality] = useState<string>('')
+  const [especifAdress, setEspecifAdress] = useState<string>('')
 
   const apiAdress = new ApiAdressService()
   const fetchProvincias = async () => {
@@ -73,6 +75,12 @@ export default function Cart() {
       setMunicipality([])
     }
   }, [showAddressForm, selectedProvinceSlug])
+
+  // Quando a província mudar, limpar seleção de município e endereço específico
+  useEffect(() => {
+    setSelectedMunicipality('')
+    setAddressData(prev => ({ ...prev, address: '' }))
+  }, [selectedProvinceSlug])
 
 
   // Formulário de endereço
@@ -467,9 +475,9 @@ export default function Cart() {
                     {/* Endereço de entrega */}
                     <div className='lg:flex  gap-4'>
                       <div>
-                        <Label htmlFor="address">Província / Morada *</Label>
+                        <Label htmlFor="province-select">Província / Morada *</Label>
                         <select
-                          id="address"
+                          id="province-select"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
                           value={selectedProvinceSlug}
                           onChange={(e) => setSelectedProvinceSlug(e.target.value)}
@@ -485,12 +493,12 @@ export default function Cart() {
                       </div>
 
                       <div>
-                        <Label htmlFor="address">Município / Morada *</Label>
+                        <Label htmlFor="municipio-select">Município / Morada *</Label>
                         <select
-                          id="address"
+                          id="municipio-select"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
-                          value={addressData.address}
-                          onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
+                          value={selectedMunicipality}
+                          onChange={(e) => { setSelectedMunicipality(e.target.value); setAddressData(prev => ({ ...prev, address: '' })); }}
                         >
                           <option value="" >Selecione um Município</option>
                           {
@@ -505,21 +513,29 @@ export default function Cart() {
                     </div>
 
                     <div>
-                      <Label htmlFor="address">Endereço especificado/ Morada *</Label>
+                      <Label htmlFor="especific-address-select">Endereço especificado/ Morada *</Label>
 
                       <select
-                        id="address"
+                        id="especific-address-select"
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
                         value={addressData.address}
                         onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
                       >
                         <option value="">Selecione um endereço</option>
-                        <option value="Viana, estalagem, Avenida Deolinda Rodrigues, 123">Viana, estalagem, Avenida Deolinda Rodrigues, 123</option>
-                        <option value="Luanda, distrito Urbano da Mainga, Rua Comandante Valódia, 45">Luanda, distrito Urbano da Mainga, Rua Comandante Valódia, 45</option>
-                        <option value="Luanda, Mutamba, Travessa do Comércio, 78">Luanda, Mutamba, Travessa do Comércio, 78</option>
-                        <option value="Talatona, Bairro do Jardim, Avenida Fidel Castro, 9">Talatona, Bairro do Jardim, Avenida Fidel Castro, 9</option>
-                        <option value="Kilamba Kiaxi, Bairro do Zango, Rua da Paz, 56">Kilamba Kiaxi, Bairro do Zango, Rua da Paz, 56</option>
-                        <option value="Cacuaco, Bairro do Rocha Pinto, Rua dos Coqueiros, 34">Cacuaco, Bairro do Rocha Pinto, Rua dos Coqueiros, 34</option>
+                        {
+                          // Apenas mostrar endereços fictícios para a província de Luanda
+                          selectedProvinceSlug.toLowerCase() === 'luanda'
+                            ? (selectedMunicipality
+                                ? especifAdressData
+                                    .filter((item) => item.municipality.trim().toLowerCase() === selectedMunicipality.trim().toLowerCase())
+                                    .flatMap((item) => item.addresses)
+                                    .map((address, idx) => (
+                                      <option key={idx} value={address}>{address}</option>
+                                    ))
+                                : <option value="" disabled>Selecione um município</option>
+                              )
+                            : <option value="" disabled>Endereços fictícios disponíveis apenas para a província de Luanda</option>
+                        }
                       </select>
 
                     </div>
