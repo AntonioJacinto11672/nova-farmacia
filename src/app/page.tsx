@@ -128,8 +128,8 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-        <Header />
-      
+      <Header />
+
 
       {/* Full-width Carousel */}
       <div className="relative w-full h-[260px] md:h-[400px] bg-gray-200 overflow-hidden">
@@ -249,6 +249,7 @@ function HomePage() {
             </div>
           </div>
         </section>
+
         {/* App Download Banner */}
         <section className="bg-gray-900 py-16 my-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -260,8 +261,16 @@ function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="#" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-gray-900 rounded-lg px-8 py-3 font-semibold hover:bg-gray-100 transition-colors">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.523 15.341c.965.555 1.68 1.426 1.68 2.659 0 1.055-.534 1.867-1.307 2.457-.773.59-1.787.876-2.984.876H3.934c-1.197 0-2.211-.286-2.984-.876C.177 19.867-.357 19.055-.357 18c0-1.233.715-2.104 1.68-2.659C.357 14.786-.357 13.915-.357 12.682c0-1.055.534-1.867 1.307-2.457.773-.59 1.787-.876 2.984-.876h10.978c1.197 0 2.211.286 2.984.876.773.59 1.307 1.402 1.307 2.457 0 1.233-.715 2.104-1.68 2.659zm-2.984-4.341H3.934c-.773 0-1.307.286-1.68.876-.357.555-.357 1.233-.357 1.806s0 1.251.357 1.806c.373.59.907.876 1.68.876h10.605c.773 0 1.307-.286 1.68-.876.357-.555.357-1.233.357-1.806s0-1.251-.357-1.806c-.373-.59-.907-.876-1.68-.876zm2.984 8.682c0-.573 0-1.251-.357-1.806-.373-.59-.907-.876-1.68-.876H3.934c-.773 0-1.307.286-1.68.876-.357.555-.357 1.233-.357 1.806s0 1.251.357 1.806c.373.59.907.876 1.68.876h10.605c.773 0 1.307-.286 1.68-.876.357-.555.357-1.233.357-1.806z" />
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M3.609 1.814c-.38.212-.609.59-.609 1.03v18.312c0 .44.229.818.609 1.03l9.987-10.186L3.609 1.814z" />
+                    <path d="M14.53 12L4.03 22.186c.3.168.67.18 1.01.02l11.94-6.78-2.45-3.426z" />
+                    <path d="M18.98 8.574l-11.94-6.78c-.34-.16-.71-.148-1.01.02L14.53 12l4.45-3.426z" />
+                    <path d="M20.39 9.388c.37.21.61.6.61 1.03v3.164c0 .43-.24.82-.61 1.03l-3.41 1.814L14.53 12l2.45-3.426 3.41 1.814z" />
                   </svg>
                   Google Play
                 </a>
@@ -282,8 +291,8 @@ function HomePage() {
           <div className="absolute inset-0 bg-grid-pharmacy-500/[0.05] bg-[size:20px_20px]"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-pharmacy-600 dark:text-pharmacy-400 font-semibold tracking-wider uppercase mb-4 block">Conheça a NETFARMA</span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-pharmacy-600 to-pharmacy-800 dark:from-pharmacy-400 dark:to-pharmacy-600 bg-clip-text text-transparent">
+              <span className="text-pharmacy-700 dark:text-pharmacy-400 font-semibold tracking-wider uppercase mb-4 block">Conheça a NETFARMA</span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-pharmacy-800 to-pharmacy-800 dark:from-pharmacy-400 dark:to-pharmacy-600 bg-clip-text text-transparent">
                 Sobre Nós
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300">
@@ -300,7 +309,7 @@ function HomePage() {
                   <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
 
                   {/* Main Icon Composition */}
-                  <div className="relative h-[500px] rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-2xl transform hover:scale-[1.02] transition-transform duration-300 overflow-hidden">
+                  <div className="relative h-[500px] rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 shadow-2xl transform hover:scale-[1.02] transition-transform duration-300 overflow-hidden">
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-10">
                       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
@@ -357,11 +366,11 @@ function HomePage() {
                   <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-xl backdrop-blur-sm bg-white/90 transform hover:-translate-y-1 transition-transform duration-300">
                     <div className="grid grid-cols-2 gap-8">
                       <div className="text-center">
-                        <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">10+</div>
+                        <div className="text-4xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">10+</div>
                         <div className="text-sm font-medium text-gray-800">Anos de Experiência</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">5K+</div>
+                        <div className="text-4xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">5K+</div>
                         <div className="text-sm font-medium text-gray-800">Clientes Satisfeitos</div>
                       </div>
                     </div>
@@ -375,12 +384,12 @@ function HomePage() {
                   {/* Feature 1 */}
                   <div className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-600 bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Qualidade Garantida</h3>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Qualidade Garantida</h3>
                     </div>
                     <p className="text-gray-600">Produtos selecionados e verificados, garantindo sua segurança e satisfação em cada compra.</p>
                   </div>
@@ -388,12 +397,12 @@ function HomePage() {
                   {/* Feature 2 */}
                   <div className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-600 bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Entrega Express</h3>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Entrega Express</h3>
                     </div>
                     <p className="text-gray-600">Entrega rápida e segura, com rastreamento em tempo real para sua tranquilidade.</p>
                   </div>
@@ -401,12 +410,12 @@ function HomePage() {
                   {/* Feature 3 */}
                   <div className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-600 bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Atendimento 24/7</h3>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Atendimento 24/7</h3>
                     </div>
                     <p className="text-gray-600">Suporte profissional disponível 24 horas por dia, 7 dias por semana.</p>
                   </div>
@@ -414,12 +423,12 @@ function HomePage() {
                   {/* Feature 4 */}
                   <div className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-600 bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Preços Justos</h3>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-slate-600 to-slate-800 bg-clip-text text-transparent">Preços Justos</h3>
                     </div>
                     <p className="text-gray-600">Melhores preços do mercado com descontos exclusivos para clientes fiéis.</p>
                   </div>
@@ -427,7 +436,7 @@ function HomePage() {
 
                 <Link
                   href="/about"
-                  className="group inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white px-8 py-3 rounded-full font-semibold mt-8 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                  className="group inline-flex items-center gap-3 bg-gradient-to-r from-slate-600 to-slate-800 text-white px-8 py-3 rounded-full font-semibold mt-8 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   Conheça Nossa História
                   <svg

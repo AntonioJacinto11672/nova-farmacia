@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
 import { Toaster } from 'react-hot-toast';
 import CartProvider from '@/providers/CartProvider';
 import { DarkModeProvider } from '@/providers/DarkModeProvider';
