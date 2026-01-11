@@ -1,7 +1,7 @@
 'use client'
 
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from 'react-leaflet'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import L, { LatLngLiteral } from 'leaflet'
 
 // Corrigir ícone do marker
@@ -39,9 +39,17 @@ function LocationSelector({
     return null
 }
 
-export default function MapClient() {
-    const [position, setPosition] = useState<LatLngLiteral | null>(null)
+export default function MapClient({ onChange, initialPosition, height = 500 }: { onChange?: (data: {lat:number,lng:number,address:AddressType|null}) => void, initialPosition?: LatLngLiteral | null, height?: number }) {
+    const [position, setPosition] = useState<LatLngLiteral | null>(initialPosition || null)
     const [address, setAddress] = useState<AddressType | null>(null)
+    const isMounted = useRef(true)
+
+    useEffect(() => {
+        isMounted.current = true
+        return () => {
+            isMounted.current = false
+        }
+    }, [])
 
     // 🔁 Reverse Geocoding
     const fetchAddress = async (lat: number, lon: number) => {
@@ -51,7 +59,7 @@ export default function MapClient() {
         const data = await res.json()
 
         console.log('Reverse Geocoding Data:', data)
-        setAddress({
+        const addr = {
             country: data.address?.country,
             state: data.address?.state,
             city: data.address?.city,
@@ -59,11 +67,21 @@ export default function MapClient() {
             suburb: data.address?.suburb,
             road: data.address?.road,
             display_name: data?.display_name,
-        })
+        }
+        if (!isMounted.current) return
+        setAddress(addr)
+        // Emitir seleção para o pai quando houver mudança
+        if (onChange) onChange({ lat, lng: lon, address: addr })
     }
 
     // 📍 Localização inicial
     useEffect(() => {
+        if (initialPosition) {
+            setPosition(initialPosition)
+            fetchAddress(initialPosition.lat, initialPosition.lng)
+            return
+        }
+
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 const coords = {
@@ -75,7 +93,7 @@ export default function MapClient() {
             },
             () => alert('Não foi possível obter localização')
         )
-    }, [])
+    }, [initialPosition])
 
     if (!position) return <p className="text-center">A obter localização...</p>
 
@@ -84,7 +102,7 @@ export default function MapClient() {
             <MapContainer
                 center={position}
                 zoom={16}
-                style={{ height: '500px', width: '100%' }}
+                style={{ height: `${height}px`, width: '100%' }}
             >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -94,6 +112,7 @@ export default function MapClient() {
                 {/* Clique no mapa */}
                 <LocationSelector
                     onSelect={(pos) => {
+                        if (!isMounted.current) return
                         setPosition(pos)
                         fetchAddress(pos.lat, pos.lng)
                     }}
@@ -105,6 +124,7 @@ export default function MapClient() {
                     draggable={true}
                     eventHandlers={{
                         dragend: (e) => {
+                            if (!isMounted.current) return
                             const marker = e.target
                             const pos = marker.getLatLng()
                             setPosition(pos)
@@ -117,7 +137,7 @@ export default function MapClient() {
             </MapContainer>
 
             {/* 📄 Endereço */}
-            <div className="mt-4 p-4 border rounded space-y-1">
+            <div className="mt-4 p-4 border rounded space-y-1 flex gap-4">
                 <p><strong>Latitude:</strong> {position.lat}</p>
                 <p><strong>Longitude:</strong> {position.lng}</p>
                 <p><strong>País:</strong> {address?.country}</p>

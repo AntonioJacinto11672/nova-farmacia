@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCart } from '@/hooks/useCart'
-import { Trash2, Plus, Minus, MapPin, ShoppingBag, ArrowLeft } from 'lucide-react'
+import { Trash2, Plus, Minus, MapPin, ShoppingBag, ArrowLeft, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import OrderDetailService from '@/api/services/orderDetail.service'
+import dynamic from 'next/dynamic'
+const MapClient = dynamic(() => import('@/components/Mapa'), { ssr: false })
 import OrderService from '@/api/services/order.service'
 import Header from '@/components/include/Header'
 import Footer from '@/components/include/Footer'
@@ -77,8 +79,10 @@ export default function Cart() {
       const data = await apiAdress.getProvinciaBySlug(slug)
       console.log('Municipios da provincia:', data.data.municipios)
       setMunicipality(data.data.municipios) // Exemplo: definir a primeira província
+      return data.data.municipios
     } catch (error) {
       console.error('Erro ao buscar municipios:', error)
+      return []
     }
   }
 
@@ -130,14 +134,69 @@ export default function Cart() {
     referencePoint: '',
     useCurrentLocation: false,
     latitude: 0,
-    longitude: 0
+    longitude: 0,
+    addressFromMap: false
   })
 
-  useEffect(() => {
-    if (addressData.useCurrentLocation) {
-      getCurrentLocation()
+  // Modal do mapa e seleção
+  const [showMapModal, setShowMapModal] = useState(false)
+  const [mapSelection, setMapSelection] = useState<any>(null)
+
+  const handleConfirmLocation = async () => {
+    if (!mapSelection) return
+    const { lat, lng, address } = mapSelection
+
+    // Tentar encontrar província correspondente
+    let matchedProvinceSlug: string | null = null
+    if (address?.state) {
+      const stateName = address.state.toLowerCase()
+      const found = province.find(p => p.nome && p.nome.toLowerCase().includes(stateName) || p.slug && p.slug.toLowerCase().includes(stateName))
+      if (found) matchedProvinceSlug = found.slug
     }
-  }, [addressData.useCurrentLocation])
+
+    let matchedMunicipalityName: string | null = null
+    if (matchedProvinceSlug) {
+      const munis = await fetchMunicipios(matchedProvinceSlug)
+      const searchNames = [address?.municipality, address?.city, address?.village, address?.town].filter(Boolean).map((s:any) => s.toLowerCase())
+      const foundMuni = (munis || []).find((m:any) => searchNames.some((n:any) => m.nome && m.nome.toLowerCase().includes(n)))
+      if (foundMuni) matchedMunicipalityName = foundMuni.nome
+    }
+
+    if (matchedProvinceSlug) {
+      // Preencher selects quando encontramos correspondência
+      setSelectedProvinceSlug(matchedProvinceSlug)
+      if (matchedMunicipalityName) setSelectedMunicipality(matchedMunicipalityName)
+
+      setAddressData(prev => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+        address: address?.road ? `${address.road}${address.suburb ? ', ' + address.suburb : ''}` : (address?.display_name || ''),
+        useCurrentLocation: true,
+        addressFromMap: true
+      }))
+    } else {
+      // Não encontramos província -> usar display_name e ocultar selects
+      setSelectedProvinceSlug('')
+      setSelectedMunicipality('')
+      setAddressData(prev => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+        address: address?.display_name || '',
+        useCurrentLocation: true,
+        addressFromMap: true
+      }))
+    }
+
+    // small delay to let any Leaflet handlers settle before unmounting the map
+    setTimeout(() => {
+      calculateDelivery()
+      setShowMapModal(false)
+    }, 120)
+  }
+
+  
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -557,72 +616,82 @@ export default function Cart() {
                       />
                     </div>
                     {/* Endereço de entrega */}
-                    <div className='lg:flex  gap-4'>
-                      <div>
-                        <Label htmlFor="province-select">Província / Morada *</Label>
-                        <select
-                          id="province-select"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
-                          value={selectedProvinceSlug}
-                          onChange={(e) => setSelectedProvinceSlug(e.target.value)}
-                        >
-                          <option value="" >Selecione uma Pronvicia</option>
-                          {
-                            province && province.map((prov) => (
-                              <option key={prov.slug} value={prov.slug}>{prov.nome}</option>
-                            ))
-                          }
-                        </select>
+                    {!addressData.addressFromMap ? (
+                      <>
+                        <div className='lg:flex  gap-4'>
+                          <div>
+                            <Label htmlFor="province-select">Província / Morada *</Label>
+                            <select
+                              id="province-select"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
+                              value={selectedProvinceSlug}
+                              onChange={(e) => setSelectedProvinceSlug(e.target.value)}
+                            >
+                              <option value="" >Selecione uma Pronvicia</option>
+                              {
+                                province && province.map((prov) => (
+                                  <option key={prov.slug} value={prov.slug}>{prov.nome}</option>
+                                ))
+                              }
+                            </select>
 
+                          </div>
+
+                          <div>
+                            <Label htmlFor="municipio-select">Município / Morada *</Label>
+                            <select
+                              id="municipio-select"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
+                              value={selectedMunicipality}
+                              onChange={(e) => { setSelectedMunicipality(e.target.value); setAddressData(prev => ({ ...prev, address: '' })); }}
+                            >
+                              <option value="" >Selecione um Município</option>
+                              {
+                                municipality && municipality.map((muni) => (
+                                  <option key={muni.slug} value={muni.nome}>{muni.nome}</option>
+                                ))
+                              }
+
+                            </select>
+
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="especific-address-select">Endereço especificado/ Morada *</Label>
+
+                          <select
+                            id="especific-address-select"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
+                            value={addressData.address}
+                            onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
+                          >
+                            <option value="">Selecione um endereço</option>
+                            {
+                              // Apenas mostrar endereços fictícios para a província de Luanda
+                              selectedProvinceSlug.toLowerCase() === 'luanda'
+                                ? (selectedMunicipality
+                                    ? especifAdressData
+                                        .filter((item) => item.municipality.trim().toLowerCase() === selectedMunicipality.trim().toLowerCase())
+                                        .flatMap((item) => item.addresses)
+                                        .map((address, idx) => (
+                                          <option key={idx} value={address}>{address}</option>
+                                        ))
+                                    : <option value="" disabled>Selecione um município</option>
+                                  )
+                                : <option value="" disabled>Endereços fictícios disponíveis apenas para a província de Luanda</option>
+                            }
+                          </select>
+
+                        </div>
+                      </>
+                    ) : (
+                      <div className="bg-pharmacy-50 dark:bg-pharmacy-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-pharmacy-700 dark:text-pharmacy-300">
+                          ✓ Localização obtida: {addressData.address}
+                        </p>
                       </div>
-
-                      <div>
-                        <Label htmlFor="municipio-select">Município / Morada *</Label>
-                        <select
-                          id="municipio-select"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
-                          value={selectedMunicipality}
-                          onChange={(e) => { setSelectedMunicipality(e.target.value); setAddressData(prev => ({ ...prev, address: '' })); }}
-                        >
-                          <option value="" >Selecione um Município</option>
-                          {
-                            municipality && municipality.map((muni) => (
-                              <option key={muni.slug} value={muni.nome}>{muni.nome}</option>
-                            ))
-                          }
-
-                        </select>
-
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="especific-address-select">Endereço especificado/ Morada *</Label>
-
-                      <select
-                        id="especific-address-select"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600"
-                        value={addressData.address}
-                        onChange={(e) => setAddressData({ ...addressData, address: e.target.value })}
-                      >
-                        <option value="">Selecione um endereço</option>
-                        {
-                          // Apenas mostrar endereços fictícios para a província de Luanda
-                          selectedProvinceSlug.toLowerCase() === 'luanda'
-                            ? (selectedMunicipality
-                                ? especifAdressData
-                                    .filter((item) => item.municipality.trim().toLowerCase() === selectedMunicipality.trim().toLowerCase())
-                                    .flatMap((item) => item.addresses)
-                                    .map((address, idx) => (
-                                      <option key={idx} value={address}>{address}</option>
-                                    ))
-                                : <option value="" disabled>Selecione um município</option>
-                              )
-                            : <option value="" disabled>Endereços fictícios disponíveis apenas para a província de Luanda</option>
-                        }
-                      </select>
-
-                    </div>
+                    )}
 
                     <div>
                       <Label htmlFor="reference">Ponto de Referência</Label>
@@ -634,22 +703,53 @@ export default function Cart() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="useLocation"
-                        checked={addressData.useCurrentLocation}
-                        onChange={(e) => setAddressData({ ...addressData, useCurrentLocation: e.target.checked })}
-                      />
-                      <Label htmlFor="useLocation">Usar localização atual</Label>
+                      <Button variant="outline" onClick={() => setShowMapModal(true)}>
+                        <MapPin className="w-4 h-4 mr-2" /> Usar minha localização
+                      </Button>
                     </div>
 
-                    {addressData.useCurrentLocation && (addressData.latitude !== 0) && (
+                    {/* Modal do mapa */}
+                    {showMapModal && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <Card className="w-full max-w-3xl bg-white dark:bg-gray-800">
+                          <div className="flex justify-between items-start p-4">
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Escolher Localização</h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Clique no mapa ou arraste o marcador para selecionar o local e depois clique em <strong>Feito</strong>.</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => setShowMapModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+
+                          <div className="p-4">
+                            <div className="max-h-[60vh] overflow-hidden">
+                              <MapClient height={320} initialPosition={(addressData.latitude && addressData.longitude) ? { lat: addressData.latitude, lng: addressData.longitude } : undefined} onChange={(data) => setMapSelection(data)} />
+                            </div>
+
+                            <div className="mt-4 flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setShowMapModal(false)}>Cancelar</Button>
+                              <Button onClick={handleConfirmLocation} className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white" disabled={!mapSelection}>Feito</Button>
+                            </div>
+                          </div>
+
+                        </Card>
+                      </div>
+                    )}
+
+                    {addressData.addressFromMap ? (
+                      <div className="bg-pharmacy-50 dark:bg-pharmacy-900/20 p-4 rounded-lg">
+                        <p className="text-sm text-pharmacy-700 dark:text-pharmacy-300">
+                          ✓ Localização obtida: {addressData.address}
+                        </p>
+                      </div>
+                    ) : (addressData.useCurrentLocation && (addressData.latitude !== 0) && (
                       <div className="bg-pharmacy-50 dark:bg-pharmacy-900/20 p-4 rounded-lg">
                         <p className="text-sm text-pharmacy-700 dark:text-pharmacy-300">
                           ✓ Localização obtida: {addressData.latitude.toFixed(4)}, {addressData.longitude.toFixed(4)}
                         </p>
                       </div>
-                    )}
+                    ))}
 
                     {/* Botão para continuar para pagamento */}
                     <div className="pt-4">
@@ -725,7 +825,7 @@ export default function Cart() {
                       </div>
 
                       {/* Cartão (simulado) */}
-                      <div
+                    {/*   <div
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'card'
                           ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
@@ -746,10 +846,10 @@ export default function Cart() {
                             <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento com cartão (simulado)</p>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* MBWay / Mobile Money (simulado) */}
-                      <div
+                    {/*   <div
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedPaymentMethod === 'mbway'
                           ? 'border-pharmacy-600 bg-pharmacy-50 dark:bg-pharmacy-900/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-pharmacy-300'
@@ -770,7 +870,7 @@ export default function Cart() {
                             <p className="text-sm text-gray-600 dark:text-gray-400">Pagamento por telemóvel (simulado)</p>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Dinheiro na entrega */}
                       <div
