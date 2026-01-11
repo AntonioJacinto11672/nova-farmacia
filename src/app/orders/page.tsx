@@ -7,7 +7,7 @@ import Footer from '@/components/include/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, FileText, Download, Printer } from 'lucide-react'
+import { Eye, FileText, Download, Printer, Heart, Truck, Package, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import OrderService from '@/api/services/order.service'
 import OrderDetailService from '@/api/services/orderDetail.service'
@@ -102,6 +102,7 @@ export default function OrdersPage() {
       }
     }
 
+
     checkAuth()
   }, [router])
 
@@ -124,11 +125,12 @@ export default function OrdersPage() {
 
       // Buscar pedidos do usuário
       const ordersResponse = await orderService.getOrderByUserId(userData.id)
-      console.log(" No orderDetailhes ", ordersResponse)
+      //console.log(" No orderDetailhes ", ordersResponse)
       if (ordersResponse.data) {
         const orderDataNew = ordersResponse.data.data
 
         setOrders(ordersResponse.data.data as any)
+        console.log(" Orders by teste: ", orderDataNew)
       }
     } catch (error) {
       console.log('Erro ao carregar pedidos:', error)
@@ -189,6 +191,61 @@ export default function OrdersPage() {
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               Acompanhe o status dos seus pedidos e gere faturas
             </p>
+          </div>
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Pedidos</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> {orders.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 desde a semana passada
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> {orders.filter(order => order.Status.type === 'Em processamento').length}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 desde a semana passada
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pedidos Cancelado</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> {orders.filter(order => order.Status.type === 'Cancelado').length}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 desde a semana passada
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pedidos Concluídos</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold"> {orders.filter(order => order.Status.type === 'Concluído').length}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 desde a semana passada
+                </p>
+              </CardContent>
+            </Card>
+
+
           </div>
 
           {orders.length === 0 ? (
