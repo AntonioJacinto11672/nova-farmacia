@@ -211,14 +211,14 @@ export default function OrdersPage() {
             </Card>
           ) : (
             <div className="space-y-6">
-              {orders.map((order) => (
+              {orders.map((order, index) => (
                 <Card key={order.id} className="bg-white dark:bg-gray-800">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            Pedido #{order.id}
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mr-4">
+                            Cod. Pedido: {order.id.slice(0, 8).toUpperCase()}
                           </h3>
                           <Badge className={getStatusColor(order.Status.type)}>
                             {order.Status.type}

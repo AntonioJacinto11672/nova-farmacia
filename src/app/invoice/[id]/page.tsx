@@ -9,25 +9,31 @@ import OrderDetailService from '@/api/services/orderDetail.service'
 import OrderItemService from '@/api/services/orderItem.service'
 import AddressService from '@/api/services/address.service'
 import toast from 'react-hot-toast'
-import type { Order, OrderItem } from '@/app/orders/page'
+import type { OrderType, OrderItem } from '@/app/orders/page'
 
 export default function InvoicePage() {
   const params = useParams()
   const router = useRouter()
   const orderId = params.id as string
-  const [order, setOrder] = useState<Order | null>(null)
+  const [order, setOrder] = useState<OrderType | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
   const [address, setAddress] = useState<any>(null)
   const [orderItens, setOrderItens] = useState<any>()
+
+
+
+
   useEffect(() => {
     loadOrderData()
+    //console.log("UseEffect do invoice com orderId:", orderId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
   const loadOrderData = async () => {
     try {
-      console.log("In trycatch")
+      //console.log("In trycatch")
       // Obter dados do usuário via API
       const response = await fetch('/api/auth/me', {
         credentials: 'include'
@@ -42,43 +48,30 @@ export default function InvoicePage() {
       setUserData(userData)
 
       const orderService = new OrderService()
-      const orderDetailService = new OrderDetailService()
       const orderItemService = new OrderItemService()
       /*  const addressService = new AddressService() */
 
-      // Buscar pedido por ID
-      const orderResponse = await orderService.getOrderById(orderId)
+      //getOrder byUser Id
 
-      console.log("Pedido por id", orderResponse)
+      // Buscar pedidos do usuário
+      const ordersResponse = await orderService.getOrderByUserId(userData.id)
 
-      if (orderResponse.data && orderResponse.data.data) {
-        const foundOrder = orderResponse.data.data
+      const orders = ordersResponse.data?.data || []
 
-        // Buscar detalhes e itens
-        /*  const detailsResponse = await orderDetailService.getOrderDetailsByOrderId(orderId)
-         const itemsResponse = await orderItemService.getOrderItemsByOrderId(orderId)
-          */
-        const orderDataNew = orderResponse.data.data
+      const selectedOrder = orders.find(
+        (order) => order.id === orderId
+      )
 
+      //console.log("Pedido encontrado:", selectedOrder)
 
 
-        setOrder(orderDataNew as any)
-
-        // Buscar endereço do usuário
-        /*  if (userData?.id) {
-           const addressResponse = await addressService.getAddressByUserId(userData.id)
-           if (addressResponse.data?.data) {
-             setAddress(addressResponse.data.data)
-           }
-         } */
+      if (!selectedOrder) {
+        toast.error('Pedido não encontrado')
+        return
       }
 
-      const orderItemResponse = await orderItemService.getOrderItemByOrderId(orderId)
-      console.log("Pedido OrderItens id", orderItemResponse)
+      setOrder(selectedOrder as any)
 
-      if (orderItemResponse.data) {
-        setOrderItens(orderItemResponse.data.data)
-      }
     } catch (error) {
       console.log('Erro ao carregar dados da fatura:', error)
       toast.error('Erro ao carregar dados da fatura')
@@ -200,7 +193,7 @@ export default function InvoicePage() {
               <div className="text-right">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">FATURA / RECIBO</h2>
                 <p className="text-gray-600">
-                  Nº: <span className="font-semibold">#{order.id}</span>
+                  Cod. Pedido:  <span className="font-semibold">#{order.id.slice(0, 8).toUpperCase()}</span>
                 </p>
                 <p className="text-gray-600">
                   Data: {formatDate(order.createdAt)}

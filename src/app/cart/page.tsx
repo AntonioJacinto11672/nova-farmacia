@@ -20,6 +20,7 @@ import AddressService from '@/api/services/address.service'
 import ApiAdressService from '@/api/common/apiAdress.service'
 import { MunicipioApiType, ProvinceApiType } from '@/type/ProvinceApiType'
 import especifAdressData, { especifAdressDataType } from '@/utils/especifAdressData'  
+import { FormatPrice } from '@/utils/FormatPrice'
 
 export default function Cart() {
   const {
@@ -1002,12 +1003,12 @@ export default function Cart() {
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Taxa de entrega</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">Gratuita</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100"> {FormatPrice(deliveryFee)}</span>
                       </div>
 
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Tempo estimado</span>
-                        <span className="font-medium text-green-600 dark:text-green-400">✓ Menos de 24 horas</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">✓ Menos de 72 horas</span>
                       </div>
                     </>
                   )}
