@@ -42,6 +42,12 @@ export default function Cart() {
   const [expressPhone, setExpressPhone] = useState('')
   const [expressPhoneError, setExpressPhoneError] = useState('')
 
+  // Prescrição: modal e campos (opcional)
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false)
+  const [prescriptionNote, setPrescriptionNote] = useState('')
+  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null)
+  const [prescriptionError, setPrescriptionError] = useState('')
+
   // Card payment fields
   const [cardNumber, setCardNumber] = useState('')
   const [cardHolder, setCardHolder] = useState('')
@@ -240,43 +246,74 @@ export default function Cart() {
     }
   }
 
-  const handleContinueToDelivery = async () => {
+  // Ao clicar em continuar, primeiro mostramos o modal para prescrição
+  const handleContinueToDelivery = () => {
     if (cartProducts && cartProducts.length > 0) {
-      // Verificar se há usuário logado via API
-      try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        })
-        if (!response.ok) {
-          toast.error('Por favor, faça login para continuar')
-          return
-        }
-        const data = await response.json()
-        const userData = data.user
+      setShowPrescriptionModal(true)
+    }
+  }
 
-        setIsLoadingAddress(true)
-
-        try {
-          // Verificar se já existe endereço
-          const addressService = new AddressService()
-          const addressResponse = await addressService.getAddressByUserId(userData.id)
-
-          if (addressResponse.data && addressResponse.data.data) {
-            setExistingAddress(addressResponse.data.data)
-          }
-        } catch (error) {
-          console.log('Erro ao carregar endereço:', error)
-        } finally {
-          setIsLoadingAddress(false)
-        }
-
-        setShowAddressForm(true)
-        //await fetchProvincias()
-
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error)
-        toast.error('Erro ao verificar autenticação')
+  // Fluxo extraído para iniciar o processo (autenticação + carregar endereço)
+  const startDeliveryFlow = async (prescriptionData?: { note?: string; file?: File | null }) => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        toast.error('Por favor, faça login para continuar')
+        setShowPrescriptionModal(false)
+        return
       }
+      const data = await response.json()
+      const userData = data.user
+
+      setIsLoadingAddress(true)
+
+      try {
+        // Verificar se já existe endereço
+        const addressService = new AddressService()
+        const addressResponse = await addressService.getAddressByUserId(userData.id)
+
+        if (addressResponse.data && addressResponse.data.data) {
+          setExistingAddress(addressResponse.data.data)
+        }
+      } catch (error) {
+        console.log('Erro ao carregar endereço:', error)
+      } finally {
+        setIsLoadingAddress(false)
+      }
+
+      // Persistir temporariamente a prescrição no localStorage para envio posterior (server-side endpoint não implementado aqui)
+      if (prescriptionData && (prescriptionData.note || prescriptionData.file)) {
+        try {
+          localStorage.setItem('prescription', JSON.stringify({ note: prescriptionData.note || '', fileName: prescriptionData.file?.name || '' }))
+        } catch (e) {
+          console.warn('Não foi possível salvar a prescrição localmente', e)
+        }
+      }
+
+      setShowPrescriptionModal(false)
+      setShowAddressForm(true)
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error)
+      toast.error('Erro ao verificar autenticação')
+      setShowPrescriptionModal(false)
+    }
+  }
+
+  const proceedWithPrescription = async (usePrescription: boolean) => {
+    // Se o usuário escolher enviar a prescrição, validar
+    if (usePrescription) {
+      if (!prescriptionFile && !prescriptionNote) {
+        setPrescriptionError('Por favor, anexe a receita ou adicione uma observação')
+        return
+      }
+      // aqui poderíamos enviar o arquivo para o servidor (endpoint não disponível no escopo atual)
+      // por enquanto contemos os dados localmente e seguimos
+      await startDeliveryFlow({ note: prescriptionNote, file: prescriptionFile })
+    } else {
+      // Comprar sem receita
+      await startDeliveryFlow()
     }
   }
 
@@ -581,6 +618,54 @@ export default function Cart() {
                     <Button onClick={handleContinueToDelivery} className="flex-1 bg-pharmacy-600 hover:bg-pharmacy-700 text-white">
                       Continuar para entrega
                     </Button>
+                  </div>
+                )}
+
+                {/* Modal de prescrição: permite anexar receita ou comprar sem receita */}
+                {showPrescriptionModal && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="w-full max-w-2xl bg-white dark:bg-gray-800">
+                      <div className="flex justify-between items-start p-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Deseja anexar uma receita?</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Você pode anexar a receita aqui (imagem/PDF) ou continuar sem receita.</p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setShowPrescriptionModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      <div className="p-4 space-y-4">
+                        <div>
+                          <Label htmlFor="prescription-file">Anexar receita (imagem ou PDF)</Label>
+                          <input
+                            id="prescription-file"
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => { const f = e.target.files?.[0] || null; setPrescriptionFile(f); if (prescriptionError) setPrescriptionError(''); }}
+                            className="mt-2 border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pharmacy-600  "
+                          />
+                          {prescriptionFile && (
+                            <div className="mt-2 text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between">
+                              <span>{prescriptionFile.name}</span>
+                              <Button variant="ghost" size="sm" onClick={() => setPrescriptionFile(null)}>Remover</Button>
+                            </div>
+                          )}
+                        </div>
+
+                       {/*  <div>
+                          <Label htmlFor="prescription-note">Observações (opcional)</Label>
+                          <Input id="prescription-note" value={prescriptionNote} onChange={(e) => { setPrescriptionNote(e.target.value); if (prescriptionError) setPrescriptionError(''); }} placeholder="Ex: nome do paciente ou detalhes" />
+                        </div> */}
+
+                        {prescriptionError && <p className="text-sm text-red-600">{prescriptionError}</p>}
+
+                        <div className="flex justify-end gap-3 pt-2">
+                          <Button variant="outline" onClick={() => proceedWithPrescription(false)}>Comprar sem receita</Button>
+                          <Button onClick={() => proceedWithPrescription(true)} className="bg-pharmacy-600 hover:bg-pharmacy-700 text-white">Enviar receita e continuar</Button>
+                        </div>
+                      </div>
+                    </Card>
                   </div>
                 )}
               </div>

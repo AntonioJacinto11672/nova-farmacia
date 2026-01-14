@@ -195,10 +195,10 @@ export default function ProductDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando produto...</p>
+          <p className="text-gray-600 dark:text-gray-300">Carregando produto...</p>
         </div>
       </div>
     )
@@ -206,7 +206,7 @@ export default function ProductDetailPage({
 
   if (!medicine) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
           <Link href="/products" className="text-blue-600 hover:underline">
@@ -218,24 +218,24 @@ export default function ProductDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-6">
           <Link href="/" className="hover:text-blue-600">Início</Link>
           <span>/</span>
           <Link href="/products" className="hover:text-blue-600">Produtos</Link>
           <span>/</span>
-          <span className="text-gray-900">{medicine.name}</span>
+          <span className="text-gray-900 dark:text-gray-100">{medicine.name}</span>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Imagens do Produto */}
           <div className="space-y-4">
-            <div className="aspect-square bg-white rounded-lg border overflow-hidden">
+            <div className="aspect-square bg-white dark:bg-gray-800 rounded-lg border overflow-hidden">
               <div className="w-full h-full flex items-center justify-center">
                 <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
                   <Heart className="w-16 h-16 text-blue-600" />

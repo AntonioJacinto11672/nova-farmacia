@@ -218,7 +218,7 @@ export default function ProductsPage() {
     setPageSizeProvider(5 + pageSize)
   }
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
             <Header />
 
@@ -228,7 +228,7 @@ export default function ProductsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {/* Sidebar */}
                         <aside className="md:col-span-1">
-                            <div className="bg-white p-4 rounded-lg shadow">
+                            <div className="bg-white  p-4 rounded-lg shadow dark:bg-gray-800">
                                 <h2 className="text-lg font-semibold mb-3">Filtros</h2>
 
                                 <div className="mb-4">
